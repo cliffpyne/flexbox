@@ -1,0 +1,26 @@
+node_modules/
+.yarn/cache
+.yarn/install-state.gz
+dist/
+build/
+.next/
+.turbo/
+*.log
+.env
+.env.local
+.env.production
+
+# Android
+apps/*/android/.gradle
+apps/*/android/app/build
+apps/*/android/build
+
+# iOS
+apps/*/ios/build
+apps/*/ios/Pods
+apps/*/ios/*.xcworkspace
+
+# Python
+__pycache__/
+*.pyc
+backend/ai-dispatch/.venv
