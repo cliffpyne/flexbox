@@ -1,3 +1,4 @@
+declare const __DEV__: any;
 import axios, { AxiosInstance } from 'axios';
 
 export const getBaseURL = () => {
