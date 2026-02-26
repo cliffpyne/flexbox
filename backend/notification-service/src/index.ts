@@ -32,10 +32,20 @@ const receiver = new Receiver({
 });
 
 // WEBHOOK ENDPOINT (Replaces Kafka startKafkaConsumer)
-app.post("/webhook/notifications", express.json(), receiver.verify({
-  signature: (req) => req.headers["upstash-signature"] as string,
-}), async (req: any, res) => {
+// WEBHOOK ENDPOINT (Replaces Kafka startKafkaConsumer)
+app.post("/webhook/notifications", express.json(), async (req: any, res) => {
   try {
+    // Verify QStash signature manually
+    const signature = req.headers["upstash-signature"] as string;
+    const isValid = await receiver.verify({
+      signature,
+      body: JSON.stringify(req.body),
+    });
+
+    if (!isValid) {
+      return res.status(401).send("Unauthorized");
+    }
+
     const { topic, data } = req.body;
     console.log(`🔔 Notification Event: ${topic}`, data);
 
@@ -53,9 +63,7 @@ app.post("/webhook/notifications", express.json(), receiver.verify({
       body = `Pickup from ${data.origin}`;
     }
 
-    // Use the sender function we defined below
     await sendPushNotification(data.userId || data.riderId, { title, body });
-    
     res.status(200).send("Notification Processed");
   } catch (error) {
     console.error("Webhook error:", error);
