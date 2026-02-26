@@ -372,7 +372,7 @@ __metadata:
     "@types/express": "npm:^4.17.21"
     "@types/node": "npm:^20.11.0"
     "@types/pg": "npm:^8.10.9"
-    "@upstash/qstash": "npm:^2.0.0"
+    "@upstash/qstash": "npm:^2.7.0"
     cors: "npm:^2.8.5"
     dotenv: "npm:^16.3.1"
     express: "npm:^4.18.2"
@@ -1001,7 +1001,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@upstash/qstash@npm:^2.0.0":
+"@upstash/qstash@npm:^2.7.0":
   version: 2.9.0
   resolution: "@upstash/qstash@npm:2.9.0"
   dependencies:

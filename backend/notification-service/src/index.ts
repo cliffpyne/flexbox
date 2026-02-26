@@ -1,7 +1,8 @@
 import express from 'express';
 import { Pool } from 'pg';
 import admin from 'firebase-admin';
-import { Receiver } from "@upstash/qstash/express"; // Important: QStash security
+import { Receiver } from "@upstash/qstash";
+
 import cors from 'cors';
 import 'dotenv/config';
 
