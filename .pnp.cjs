@@ -338,6 +338,7 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./packages/api/",\
         "packageDependencies": [\
           ["@flexbox/api", "workspace:packages/api"],\
+          ["@types/node", "npm:25.3.1"],\
           ["axios", "npm:1.13.5"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
@@ -824,6 +825,14 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "../../../../home/clifforddennis/snap/code/226/.local/share/yarn/berry/cache/@types-node-npm-25.3.0-543725d5a4-10c0.zip/node_modules/@types/node/",\
         "packageDependencies": [\
           ["@types/node", "npm:25.3.0"],\
+          ["undici-types", "npm:7.18.2"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:25.3.1", {\
+        "packageLocation": "../../../../home/clifforddennis/snap/code/226/.local/share/yarn/berry/cache/@types-node-npm-25.3.1-d84ce1235a-10c0.zip/node_modules/@types/node/",\
+        "packageDependencies": [\
+          ["@types/node", "npm:25.3.1"],\
           ["undici-types", "npm:7.18.2"]\
         ],\
         "linkType": "HARD"\
