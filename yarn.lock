@@ -419,6 +419,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@flexbox/tracking-service@workspace:backend/tracking-service":
+  version: 0.0.0-use.local
+  resolution: "@flexbox/tracking-service@workspace:backend/tracking-service"
+  dependencies:
+    "@types/cors": "npm:^2.8.17"
+    "@types/express": "npm:^4.17.21"
+    "@types/node": "npm:^20.11.0"
+    "@types/pg": "npm:^8.10.9"
+    cors: "npm:^2.8.5"
+    dotenv: "npm:^16.3.1"
+    express: "npm:^4.18.2"
+    pg: "npm:^8.11.3"
+    redis: "npm:^4.6.10"
+    socket.io: "npm:^4.6.1"
+    tsx: "npm:^4.7.0"
+    typescript: "npm:^5.4.0"
+  languageName: unknown
+  linkType: soft
+
 "@flexbox/types@workspace:packages/types":
   version: 0.0.0-use.local
   resolution: "@flexbox/types@workspace:packages/types"
@@ -762,6 +781,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@socket.io/component-emitter@npm:~3.1.0":
+  version: 3.1.2
+  resolution: "@socket.io/component-emitter@npm:3.1.2"
+  checksum: 10c0/c4242bad66f67e6f7b712733d25b43cbb9e19a595c8701c3ad99cbeb5901555f78b095e24852f862fffb43e96f1d8552e62def885ca82ae1bb05da3668fd87d7
+  languageName: node
+  linkType: hard
+
 "@tootallnate/once@npm:2":
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
@@ -802,7 +828,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/cors@npm:^2.8.17":
+"@types/cors@npm:^2.8.12, @types/cors@npm:^2.8.17":
   version: 2.8.19
   resolution: "@types/cors@npm:2.8.19"
   dependencies:
@@ -891,7 +917,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:>=13.7.0, @types/node@npm:^25.3.1":
+"@types/node@npm:>=10.0.0, @types/node@npm:>=13.7.0, @types/node@npm:^25.3.1":
   version: 25.3.1
   resolution: "@types/node@npm:25.3.1"
   dependencies:
@@ -1028,7 +1054,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"accepts@npm:~1.3.8":
+"accepts@npm:~1.3.4, accepts@npm:~1.3.8":
   version: 1.3.8
   resolution: "accepts@npm:1.3.8"
   dependencies:
@@ -1152,6 +1178,13 @@ __metadata:
   version: 1.5.1
   resolution: "base64-js@npm:1.5.1"
   checksum: 10c0/f23823513b63173a001030fae4f2dabe283b99a9d324ade3ad3d148e218134676f1ee8568c877cd79ec1c53158dcf2d2ba527a97c606618928ba99dd930102bf
+  languageName: node
+  linkType: hard
+
+"base64id@npm:2.0.0, base64id@npm:~2.0.0":
+  version: 2.0.0
+  resolution: "base64id@npm:2.0.0"
+  checksum: 10c0/6919efd237ed44b9988cbfc33eca6f173a10e810ce50292b271a1a421aac7748ef232a64d1e6032b08f19aae48dce6ee8f66c5ae2c9e5066c82b884861d4d453
   languageName: node
   linkType: hard
 
@@ -1333,14 +1366,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:~0.7.1":
+"cookie@npm:~0.7.1, cookie@npm:~0.7.2":
   version: 0.7.2
   resolution: "cookie@npm:0.7.2"
   checksum: 10c0/9596e8ccdbf1a3a88ae02cf5ee80c1c50959423e1022e4e60b91dd87c622af1da309253d8abdb258fb5e3eacb4f08e579dc58b4897b8087574eee0fd35dfa5d2
   languageName: node
   linkType: hard
 
-"cors@npm:^2.8.5":
+"cors@npm:^2.8.5, cors@npm:~2.8.5":
   version: 2.8.6
   resolution: "cors@npm:2.8.6"
   dependencies:
@@ -1366,7 +1399,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.3.4, debug@npm:^4.3.6":
+"debug@npm:4, debug@npm:^4.3.4, debug@npm:^4.3.6, debug@npm:~4.4.1":
   version: 4.4.3
   resolution: "debug@npm:4.4.3"
   dependencies:
@@ -1465,6 +1498,30 @@ __metadata:
   dependencies:
     once: "npm:^1.4.0"
   checksum: 10c0/b0701c92a10b89afb1cb45bf54a5292c6f008d744eb4382fa559d54775ff31617d1d7bc3ef617575f552e24fad2c7c1a1835948c66b3f3a4be0a6c1f35c883d8
+  languageName: node
+  linkType: hard
+
+"engine.io-parser@npm:~5.2.1":
+  version: 5.2.3
+  resolution: "engine.io-parser@npm:5.2.3"
+  checksum: 10c0/ed4900d8dbef470ab3839ccf3bfa79ee518ea8277c7f1f2759e8c22a48f64e687ea5e474291394d0c94f84054749fd93f3ef0acb51fa2f5f234cc9d9d8e7c536
+  languageName: node
+  linkType: hard
+
+"engine.io@npm:~6.6.0":
+  version: 6.6.5
+  resolution: "engine.io@npm:6.6.5"
+  dependencies:
+    "@types/cors": "npm:^2.8.12"
+    "@types/node": "npm:>=10.0.0"
+    accepts: "npm:~1.3.4"
+    base64id: "npm:2.0.0"
+    cookie: "npm:~0.7.2"
+    cors: "npm:~2.8.5"
+    debug: "npm:~4.4.1"
+    engine.io-parser: "npm:~5.2.1"
+    ws: "npm:~8.18.3"
+  checksum: 10c0/0934970af5b31e144c33d9da6523542fac0eabbb36e9528dc6bbf5831df55752df2c50b047d7fd3b24f66d82896867215b05dae1043ed756e55a6d18108023ad
   languageName: node
   linkType: hard
 
@@ -3256,6 +3313,41 @@ __metadata:
   languageName: node
   linkType: hard
 
+"socket.io-adapter@npm:~2.5.2":
+  version: 2.5.6
+  resolution: "socket.io-adapter@npm:2.5.6"
+  dependencies:
+    debug: "npm:~4.4.1"
+    ws: "npm:~8.18.3"
+  checksum: 10c0/2af9827c3e8e2a445d7d1523f7ad4fcc37009da44f72042e8a9af27e4caf29fe0a34de6771a6e9971a0ff8d527631fe25b80230ff6c42c045e2913f0ac308059
+  languageName: node
+  linkType: hard
+
+"socket.io-parser@npm:~4.2.4":
+  version: 4.2.5
+  resolution: "socket.io-parser@npm:4.2.5"
+  dependencies:
+    "@socket.io/component-emitter": "npm:~3.1.0"
+    debug: "npm:~4.4.1"
+  checksum: 10c0/fce2b7a76eed9babc7b4156e82e5cd478b0bc5eb877d52ae48aa0d90fe2d11be5a9e576fbc8bdbf3dd656863965ad133ba6c7d45172a1e020270e7c7891c1b35
+  languageName: node
+  linkType: hard
+
+"socket.io@npm:^4.6.1":
+  version: 4.8.3
+  resolution: "socket.io@npm:4.8.3"
+  dependencies:
+    accepts: "npm:~1.3.4"
+    base64id: "npm:~2.0.0"
+    cors: "npm:~2.8.5"
+    debug: "npm:~4.4.1"
+    engine.io: "npm:~6.6.0"
+    socket.io-adapter: "npm:~2.5.2"
+    socket.io-parser: "npm:~4.2.4"
+  checksum: 10c0/1f7c4118cdbcb346e63db9d8fd657c3dc5caf148404762ed98ac14c4e7b74984a65fe51657bfe1696adcf7c168d1a3aad4a26b52864ce8491556f38218598f0b
+  languageName: node
+  linkType: hard
+
 "socks-proxy-agent@npm:^8.0.3":
   version: 8.0.5
   resolution: "socks-proxy-agent@npm:8.0.5"
@@ -3626,6 +3718,21 @@ __metadata:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 10c0/56fece1a4018c6a6c8e28fbc88c87e0fbf4ea8fd64fc6c63b18f4acc4bd13e0ad2515189786dd2c30d3eec9663d70f4ecf699330002f8ccb547e4a18231fc9f0
+  languageName: node
+  linkType: hard
+
+"ws@npm:~8.18.3":
+  version: 8.18.3
+  resolution: "ws@npm:8.18.3"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 10c0/eac918213de265ef7cb3d4ca348b891a51a520d839aa51cdb8ca93d4fa7ff9f6ccb339ccee89e4075324097f0a55157c89fa3f7147bde9d8d7e90335dc087b53
   languageName: node
   linkType: hard
 
