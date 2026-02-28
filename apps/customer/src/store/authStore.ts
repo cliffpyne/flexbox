@@ -1,11 +1,18 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+interface User {
+  id: string;
+  name: string;
+  phone: string;
+}
+
 interface AuthState {
   token: string | null;
-  user: any | null;
+  user: User | null;
   isLoggedIn: boolean;
-  login: (token: string, user: any) => Promise<void>;
+  isHydrated: boolean;
+  login: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
 }
@@ -14,6 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   user: null,
   isLoggedIn: false,
+  isHydrated: false,
 
   login: async (token, user) => {
     await AsyncStorage.setItem('auth_token', token);
@@ -28,10 +36,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   hydrate: async () => {
-    const token = await AsyncStorage.getItem('auth_token');
-    const user = await AsyncStorage.getItem('user');
-    if (token && user) {
-      set({ token, user: JSON.parse(user), isLoggedIn: true });
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      const userStr = await AsyncStorage.getItem('user');
+      if (token && userStr) {
+        set({ token, user: JSON.parse(userStr), isLoggedIn: true });
+      }
+    } finally {
+      set({ isHydrated: true });
     }
   },
 }));
