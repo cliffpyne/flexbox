@@ -24,3 +24,5 @@ apps/*/ios/*.xcworkspace
 __pycache__/
 *.pyc
 backend/ai-dispatch/.venv
+.pnp.cjs
+.pnp.loader.mjs
