@@ -1,12 +1,11 @@
 {
   "name": "flexbox",
   "private": true,
-  "packageManager": "yarn@4.12.0",
   "workspaces": [
-    "apps/*",
     "packages/*",
     "backend/*"
   ],
+  "packageManager": "yarn@4.12.0",
   "devDependencies": {
     "typescript": "^5.9.3"
   }

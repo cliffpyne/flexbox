@@ -1,7 +1,14 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
+export const AUTH_URL = 'https://flexboxauth-service-production.up.railway.app';
 export const BASE_URL = 'https://flexboxapi-gateway-production.up.railway.app';
+
+export const authApi = axios.create({
+  baseURL: AUTH_URL,
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+});
 
 export const api = axios.create({
   baseURL: BASE_URL,

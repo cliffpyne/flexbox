@@ -4,7 +4,7 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { colors, spacing, radius, fontSize, fontWeight } from '../../../theme';
-import { api } from '../../../config/api';
+import { authApi } from '../../../config/api';
 import { useAuthStore } from '../../../store/authStore';
 
 export function LoginScreen() {
@@ -20,13 +20,14 @@ export function LoginScreen() {
     }
     setLoading(true);
     try {
-      const res = await api.post('/api/auth/login', {
+      const res = await authApi.post('/login', {
         phone: `+255${phone}`,
         password,
       });
       await login(res.data.data.token, res.data.data.user);
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Login failed');
+      const msg = err?.response?.data?.message || err?.message || JSON.stringify(err);
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }

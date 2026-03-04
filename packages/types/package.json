@@ -2,6 +2,10 @@
   "name": "@flexbox/types",
   "version": "0.1.0",
   "main": "src/index.ts",
-  "scripts": { "build": "tsc" },
-  "devDependencies": { "typescript": "^5.4.5" }
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
 }

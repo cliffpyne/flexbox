@@ -12,25 +12,17 @@ export function HomeScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Good morning 👋</Text>
             <Text style={styles.name}>{user?.name || 'Customer'}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.profileBtn}
-            onPress={() => navigation.navigate('Profile')}
-          >
+          <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.navigate('Profile')}>
             <Text style={styles.profileIcon}>👤</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Send Parcel CTA */}
-        <TouchableOpacity
-          style={styles.ctaCard}
-          onPress={() => navigation.navigate('SendParcel')}
-        >
+        <TouchableOpacity style={styles.ctaCard} onPress={() => navigation.navigate('SendParcel')}>
           <Text style={styles.ctaEmoji}>📦</Text>
           <View style={styles.ctaText}>
             <Text style={styles.ctaTitle}>Send a Parcel</Text>
@@ -39,7 +31,6 @@ export function HomeScreen({ navigation }: any) {
           <Text style={styles.ctaArrow}>→</Text>
         </TouchableOpacity>
 
-        {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActions}>
@@ -61,7 +52,6 @@ export function HomeScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Recent Parcels */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Parcels</Text>
