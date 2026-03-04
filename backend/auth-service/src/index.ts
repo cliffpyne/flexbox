@@ -1,41 +1,48 @@
 import express from 'express';
-import { Pool } from 'pg';
-import { createClient } from 'redis';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import AfricasTalking from 'africastalking';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import 'dotenv/config';
 
+import { connectRedis } from './redis';
+import otpRoutes      from './routes/otp';
+import pinRoutes      from './routes/pin';
+import passwordRoutes from './routes/password';
+import adminRoutes    from './routes/admin';
+import tokenRoutes    from './routes/token';
+
 const app = express();
+
+app.use(helmet());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-const db = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-
-const redis = createClient({ 
-  url: process.env.REDIS_URL,
-  socket: {
-    connectTimeout: 60000, // Increased to 60 seconds
-    reconnectStrategy: (retries) => {
-      console.log(`Redis reconnect attempt #${retries}`);
-      return Math.min(retries * 500, 5000); // Wait longer between retries
-    }
-  }
+// Rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max:      20,
+  message:  { success: false, message: 'Too many requests' }
 });
 
-redis.on('error', (err) => console.log('Redis Client Error:', err.message));
-redis.connect().catch(err => console.log('Initial Redis Connection Failed, retrying in background...'));
+app.use('/auth', authLimiter);
 
-const AT = AfricasTalking({ apiKey: process.env.AT_API_KEY!, username: process.env.AT_USERNAME! });
+// Routes
+app.use('/auth/otp',      otpRoutes);
+app.use('/auth/pin',      pinRoutes);
+app.use('/auth/password', passwordRoutes);
+app.use('/auth',          tokenRoutes);
+app.use('/admin',         adminRoutes);
 
-app.post('/login', async (req, res) => {
-  const { phone, password } = req.body;
-  const { rows } = await db.query('SELECT * FROM users WHERE phone=$1', [phone]);
-  if (!rows[0]) return res.status(401).json({ success:false, message:"Invalid credentials" });
-  const valid = await bcrypt.compare(password, rows[0].password_hash);
-  if (!valid) return res.status(401).json({ success:false, message:"Invalid credentials" });
-  const token = jwt.sign({ userId:rows[0].id, role:rows[0].role }, process.env.JWT_SECRET!, { expiresIn:'30d' });
-  res.json({ success:true, data:{ token, user:{ id:rows[0].id, phone:rows[0].phone, role:rows[0].role } } });
-});
+app.get('/health', (_, res) => res.json({
+  status:  'ok',
+  service: 'auth-service',
+  time:    new Date().toISOString()
+}));
 
 const PORT = process.env.PORT || 3001;
-app.listen(Number(PORT), '0.0.0.0', () => console.log(`Auth Service on port ${PORT}`));
+
+connectRedis().then(() => {
+  app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`Auth Service running on port ${PORT}`);
+  });
+});
