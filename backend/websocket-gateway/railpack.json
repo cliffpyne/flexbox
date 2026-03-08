@@ -1,0 +1,12 @@
+{
+  "steps": {
+    "build": {
+      "cmds": [
+        "yarn workspace @flexbox/types build && yarn workspace @flexbox/websocket-gateway build"
+      ]
+    }
+  },
+  "deploy": {
+    "cmd": "node backend/websocket-gateway/dist/index.js"
+  }
+}
