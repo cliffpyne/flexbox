@@ -395,18 +395,25 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@flexbox/notification-service@workspace:backend/notification-service"
   dependencies:
+    "@flexbox/constants": "npm:*"
+    "@flexbox/types": "npm:*"
     "@types/cors": "npm:^2.8.17"
     "@types/express": "npm:^4.17.21"
-    "@types/node": "npm:^20.11.0"
-    "@types/pg": "npm:^8.10.9"
-    "@upstash/qstash": "npm:^2.7.0"
+    "@types/jsonwebtoken": "npm:^9.0.6"
+    "@types/node": "npm:^20.12.7"
+    africastalking: "npm:^0.5.0"
     cors: "npm:^2.8.5"
-    dotenv: "npm:^16.3.1"
-    express: "npm:^4.18.2"
+    dotenv: "npm:^16.4.5"
+    express: "npm:^4.19.2"
+    express-rate-limit: "npm:^7.2.0"
     firebase-admin: "npm:^12.0.0"
-    pg: "npm:^8.11.3"
-    tsx: "npm:^4.7.0"
-    typescript: "npm:^5.4.0"
+    helmet: "npm:^7.1.0"
+    jsonwebtoken: "npm:^9.0.2"
+    pg: "npm:^8.11.5"
+    redis: "npm:^4.6.13"
+    tsx: "npm:^4.7.2"
+    typescript: "npm:^5.4.5"
+    zod: "npm:^3.23.8"
   languageName: unknown
   linkType: soft
 
@@ -1185,17 +1192,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@upstash/qstash@npm:^2.7.0":
-  version: 2.9.0
-  resolution: "@upstash/qstash@npm:2.9.0"
-  dependencies:
-    crypto-js: "npm:>=4.2.0"
-    jose: "npm:^5.2.3"
-    neverthrow: "npm:^7.0.1"
-  checksum: 10c0/385235f77145b38ee8ef13f7554e494962e42b4a73b01f61bc9934ce35eae84d5ee31c37bc29bcbe275d3f00f139aea6ff501a3917593127dde31c18ddb631eb
-  languageName: node
-  linkType: hard
-
 "abbrev@npm:1":
   version: 1.1.1
   resolution: "abbrev@npm:1.1.1"
@@ -1226,6 +1222,21 @@ __metadata:
     mime-types: "npm:~2.1.34"
     negotiator: "npm:0.6.3"
   checksum: 10c0/3a35c5f5586cfb9a21163ca47a5f77ac34fa8ceb5d17d2fa2c0d81f41cbd7f8c6fa52c77e2c039acc0f4d09e71abdc51144246900f6bef5e3c4b333f77d89362
+  languageName: node
+  linkType: hard
+
+"africastalking@npm:^0.5.0":
+  version: 0.5.9
+  resolution: "africastalking@npm:0.5.9"
+  dependencies:
+    "@hapi/joi": "npm:^16.1.7"
+    axios: "npm:^1.2.6"
+    body-parser: "npm:^1.19.1"
+    lodash: "npm:^4.17.21"
+    phone: "npm:^3.1.29"
+    querystring: "npm:^0.2.0"
+    validate.js: "npm:^0.13.1"
+  checksum: 10c0/518ffde99bfbb39228d3b291cb7d5e49f77231582776d450624a367d7255f07de3d4599b64795835382f5ffb13f5ec375e9f64286acdccef6d307ffb274599a7
   languageName: node
   linkType: hard
 
@@ -1338,7 +1349,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.2, axios@npm:^1.6.5, axios@npm:^1.7.0":
+"axios@npm:^1.2.6, axios@npm:^1.6.2, axios@npm:^1.6.5, axios@npm:^1.7.0":
   version: 1.13.6
   resolution: "axios@npm:1.13.6"
   dependencies:
@@ -1401,7 +1412,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"body-parser@npm:^1.20.2, body-parser@npm:~1.20.3":
+"body-parser@npm:^1.19.1, body-parser@npm:^1.20.2, body-parser@npm:~1.20.3":
   version: 1.20.4
   resolution: "body-parser@npm:1.20.4"
   dependencies:
@@ -1637,13 +1648,6 @@ __metadata:
     object-assign: "npm:^4"
     vary: "npm:^1"
   checksum: 10c0/ab2bc57b8af8ef8476682a59647f7c55c1a7d406b559ac06119aa1c5f70b96d35036864d197b24cf86e228e4547231088f1f94ca05061dbb14d89cc0bc9d4cab
-  languageName: node
-  linkType: hard
-
-"crypto-js@npm:>=4.2.0":
-  version: 4.2.0
-  resolution: "crypto-js@npm:4.2.0"
-  checksum: 10c0/8fbdf9d56f47aea0794ab87b0eb9833baf80b01a7c5c1b0edc7faf25f662fb69ab18dc2199e2afcac54670ff0cd9607a9045a3f7a80336cccd18d77a55b9fdf0
   languageName: node
   linkType: hard
 
@@ -2719,13 +2723,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jose@npm:^5.2.3":
-  version: 5.10.0
-  resolution: "jose@npm:5.10.0"
-  checksum: 10c0/e20d9fc58d7e402f2e5f04e824b8897d5579aae60e64cb88ebdea1395311c24537bf4892f7de413fab1acf11e922797fb1b42269bc8fc65089a3749265ccb7b0
-  languageName: node
-  linkType: hard
-
 "json-bigint@npm:^1.0.0":
   version: 1.0.0
   resolution: "json-bigint@npm:1.0.0"
@@ -3154,13 +3151,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"neverthrow@npm:^7.0.1":
-  version: 7.2.0
-  resolution: "neverthrow@npm:7.2.0"
-  checksum: 10c0/16d1b07638e109c3e96a737fdb59703aa65e89cb68318db3cfe04c03a17a64d47e8462c8d25cb51d4199f15f37596db3097ff74ef33074eaa4b2248d3d5b599d
-  languageName: node
-  linkType: hard
-
 "node-addon-api@npm:^5.0.0":
   version: 5.1.0
   resolution: "node-addon-api@npm:5.1.0"
@@ -3441,6 +3431,13 @@ __metadata:
   dependencies:
     split2: "npm:^4.1.0"
   checksum: 10c0/5ea6c9b2de04c33abb08d33a2dded303c4a3c7162a9264519cbe85c0a9857d712463140ba42fad0c7cd4b21f644dd870b45bb2e02fcbe505b4de0744fd802c1d
+  languageName: node
+  linkType: hard
+
+"phone@npm:^3.1.29":
+  version: 3.1.71
+  resolution: "phone@npm:3.1.71"
+  checksum: 10c0/8f4ac65b82e64d7d73fb4c6e50ab36ebeea7697327c224b3586fc8b23b1e8220c0d08bdb131c4d6abe2955404bb9df8140fe8d8e3c8cb6702b5a9b58b46a2269
   languageName: node
   linkType: hard
 
