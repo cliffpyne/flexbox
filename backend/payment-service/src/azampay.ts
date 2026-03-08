@@ -46,7 +46,7 @@ export async function initiateAzamPaySTK(params: {
       }),
     });
 
-    const data = await response.json();
+    const data = await response.json() as any;
     if (response.ok && data.success) {
       return { success: true, provider_ref: data.transactionId };
     }
@@ -81,7 +81,7 @@ export async function initiateAzamPayRefund(params: {
         remarks:       `Refund for ${params.original_provider_ref}`,
       }),
     });
-    const data = await response.json();
+    const data = await response.json() as any;
     return data.success
       ? { success: true, refund_ref: data.transactionId }
       : { success: false, error: data.message };
