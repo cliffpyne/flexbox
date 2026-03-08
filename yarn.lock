@@ -305,14 +305,21 @@ __metadata:
   dependencies:
     "@types/cors": "npm:^2.8.17"
     "@types/express": "npm:^4.17.21"
+    "@types/jsonwebtoken": "npm:^9.0.6"
     "@types/node": "npm:^20.12.7"
+    "@types/uuid": "npm:^9.0.8"
     cors: "npm:^2.8.5"
+    dotenv: "npm:^16.4.5"
     express: "npm:^4.19.2"
-    express-rate-limit: "npm:^7.2.0"
     helmet: "npm:^7.1.0"
     http-proxy-middleware: "npm:^3.0.0"
+    jsonwebtoken: "npm:^9.0.2"
+    pg: "npm:^8.11.5"
+    redis: "npm:^4.6.13"
     tsx: "npm:^4.7.2"
     typescript: "npm:^5.4.5"
+    uuid: "npm:^9.0.1"
+    zod: "npm:^3.23.8"
   languageName: unknown
   linkType: soft
 
@@ -1211,6 +1218,13 @@ __metadata:
   version: 4.0.5
   resolution: "@types/tough-cookie@npm:4.0.5"
   checksum: 10c0/68c6921721a3dcb40451543db2174a145ef915bc8bcbe7ad4e59194a0238e776e782b896c7a59f4b93ac6acefca9161fccb31d1ce3b3445cb6faa467297fb473
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^9.0.8":
+  version: 9.0.8
+  resolution: "@types/uuid@npm:9.0.8"
+  checksum: 10c0/b411b93054cb1d4361919579ef3508a1f12bf15b5fdd97337d3d351bece6c921b52b6daeef89b62340fd73fd60da407878432a1af777f40648cbe53a01723489
   languageName: node
   linkType: hard
 

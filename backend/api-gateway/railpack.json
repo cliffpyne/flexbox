@@ -1,0 +1,12 @@
+{
+  "steps": {
+    "build": {
+      "cmds": [
+        "yarn workspace @flexbox/api-gateway build"
+      ]
+    }
+  },
+  "deploy": {
+    "cmd": "node backend/api-gateway/dist/index.js"
+  }
+}
