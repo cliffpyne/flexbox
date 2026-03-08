@@ -1,0 +1,12 @@
+{
+  "steps": {
+    "build": {
+      "cmds": [
+        "yarn workspace @flexbox/types build && yarn workspace @flexbox/constants build && yarn workspace @flexbox/token-service build"
+      ]
+    }
+  },
+  "deploy": {
+    "cmd": "node backend/token-service/dist/index.js"
+  }
+}
