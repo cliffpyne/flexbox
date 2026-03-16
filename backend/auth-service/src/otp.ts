@@ -52,15 +52,47 @@ export async function sendOTP(phone: string): Promise<void> {
   }
 }
 
-export async function verifyOTP(phone: string, otp: string): Promise<boolean> {
-  const redisKey = `otp:${phone}`;
+export async function verifyOTP(
+  phone: string,
+  otp: string,
+  redisPrefix: 'otp' | 'pwd_reset' = 'otp'
+): Promise<boolean> {
+  const redisKey = `${redisPrefix}:${phone}`;
   const hash = await redis.get(redisKey);
   if (!hash) return false;
-
   const isValid = await bcrypt.compare(otp, hash);
   if (isValid) {
     // Single use — delete immediately on first use
     await redis.del(redisKey);
   }
   return isValid;
+}
+
+export async function sendForgotPasswordOTP(phone: string): Promise<void> {
+  const rateKey = `pwd_reset_rate:${phone}`;
+  const count   = await redis.incr(rateKey);
+  if (count === 1) await redis.expire(rateKey, 3600);
+  if (count > 3) {
+    throw new Error('Too many reset requests. Try again in an hour.');
+  }
+
+  const otp  = String(Math.floor(100000 + Math.random() * 900000));
+  const hash = await bcrypt.hash(otp, 10);
+
+  await redis.setEx(
+    `pwd_reset:${phone}`,
+    600,
+    hash
+  );
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[FORGOT PASSWORD OTP] ${phone}: ${otp}`);
+    return;
+  }
+
+  await AT.SMS.send({
+    to:      [phone],
+    message: `FlexSend password reset code: ${otp}. Valid for 10 minutes. If you did not request this, ignore.`,
+    from:    'FlexSend',
+  });
 }

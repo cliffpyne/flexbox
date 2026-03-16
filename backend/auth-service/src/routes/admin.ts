@@ -287,9 +287,12 @@ router.post('/documents',
       }).parse(req.body);
 
       await saveDocument({
-        ...body,
-        uploaded_by: req.actor.user_id,
-      });
+  user_id:     body.user_id,
+  doc_type:    body.doc_type,
+  doc_number:  body.doc_number,
+  doc_url:     body.doc_url,
+  uploaded_by: req.actor.user_id,
+});
 
       res.json({ success: true, message: 'Document saved.' });
     } catch (err: any) {
