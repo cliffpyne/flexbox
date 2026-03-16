@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlexSend — Live API Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090E;--bg1:#0D1018;--bg2:#131720;--bg3:#1A1F2C;--border:#1C2133;--border2:#252D40;--amber:#F5A623;--amber2:#FFD166;--green:#05D394;--red:#EF4565;--blue:#4CC9F0;--purple:#B5179E;--text:#E4EAF4;--muted:#4E5870;--subtle:#8090AA}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px}
+.app{display:grid;grid-template-rows:50px 1fr 160px;height:100vh}
+
+/* TOPBAR */
+.topbar{background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:100;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-right:4px}
+.logo-sq{width:26px;height:26px;background:var(--amber);border-radius:5px;display:flex;align-items:center;justify-content:center;color:#07090E;font-weight:900;font-size:12px}
+.sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.tb-pill{display:flex;align-items:center;gap:6px;padding:3px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;font-size:11px}
+.tb-label{color:var(--muted);font-size:10px}
+.tb-val{color:var(--text);font-weight:600}
+.tb-val.ref{color:var(--amber)}
+.tb-val.pending{color:var(--amber)}
+.tb-val.transit{color:var(--blue)}
+.tb-val.delivered{color:var(--green)}
+.tb-val.blocked{color:var(--red)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-a{background:var(--amber);animation:blink 1.4s infinite}
+.dot-g{background:var(--green)}
+.dot-r{background:var(--red);animation:blink .8s infinite}
+.dot-b{background:var(--blue);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.tb-actions{margin-left:auto;display:flex;gap:6px}
+.tbtn{padding:4px 10px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--subtle);cursor:pointer;font-family:inherit;font-size:10px;transition:all .15s;letter-spacing:.03em}
+.tbtn:hover{border-color:var(--amber);color:var(--amber)}
+.tbtn.danger:hover{border-color:var(--red);color:var(--red);background:#EF456510}
+
+/* MAIN */
+.main{display:grid;grid-template-columns:200px 1fr 340px;overflow:hidden}
+
+/* ACTOR SIDEBAR */
+.sidebar{background:var(--bg1);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.sb-head{padding:10px 12px 6px;font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.actor-tab{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;border-left:2px solid transparent;transition:all .12s;position:relative}
+.actor-tab:hover{background:var(--bg2)}
+.actor-tab.active{background:var(--bg2);border-left-color:var(--amber)}
+.actor-tab.locked{opacity:.45;cursor:not-allowed}
+.av{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:1px solid transparent}
+.actor-info .an{font-size:11px;font-weight:600;color:var(--text)}
+.actor-info .ar{font-size:9px;color:var(--muted);margin-top:1px}
+.step-badge{margin-left:auto;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0}
+.step-done{background:#05D39422;color:var(--green);border:1px solid #05D39444}
+.step-active{background:#F5A62322;color:var(--amber);border:1px solid #F5A62344;animation:blink 1.4s infinite}
+.step-wait{background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+
+/* MIDDLE */
+.mid{overflow-y:auto;background:var(--bg);display:flex;flex-direction:column}
+.actor-hero{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--bg1);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.hero-av{width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.hero-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.hero-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.jwt-chip{margin-left:auto;padding:3px 8px;border:1px solid var(--border2);border-radius:3px;font-size:9px;color:var(--muted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
+
+.content{padding:14px;display:flex;flex-direction:column;gap:10px}
+.slabel{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:4px}
+
+/* Parcel info banner — shows once booked */
+.parcel-banner{background:#F5A62308;border:1px solid #F5A62322;border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px 16px}
+.pb-field{display:flex;flex-direction:column;gap:1px}
+.pb-key{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.pb-val{font-size:11px;font-weight:600;color:var(--text)}
+.pb-val.hi{color:var(--amber)}
+
+/* ACTION CARDS */
+.acard{background:var(--bg1);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .12s}
+.acard:hover{border-color:var(--border2)}
+.acard.exec{border-color:var(--amber);box-shadow:0 0 0 1px #F5A62318}
+.acard.ok{border-color:#05D39433}
+.acard.err{border-color:#EF456533}
+.ah{padding:9px 12px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.meth{padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;flex-shrink:0}
+.mGET{background:#05D39418;color:var(--green);border:1px solid #05D39433}
+.mPOST{background:#F5A62318;color:var(--amber);border:1px solid #F5A62333}
+.mPATCH{background:#4CC9F018;color:var(--blue);border:1px solid #4CC9F033}
+.ep{font-size:11px;color:var(--subtle);flex:1}
+.ep b{color:var(--text)}
+.adesc{font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.abody{padding:0 12px 12px;display:flex;flex-direction:column;gap:7px}
+.abody.hide{display:none}
+.frow{display:grid;gap:6px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.fi{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:5px 7px;color:var(--text);font-family:inherit;font-size:11px;outline:none;transition:border-color .12s;width:100%}
+.fi:focus{border-color:var(--amber)}
+.fi:disabled{opacity:.5;cursor:not-allowed}
+.fi.auto{border-color:#F5A62333;color:var(--amber)}
+.fsel{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:5px 7px;color:var(--text);font-family:inherit;font-size:11px;outline:none;cursor:pointer;width:100%}
+.fsel:focus{border-color:var(--amber)}
+.fire{width:100%;padding:7px;background:var(--amber);color:#07090E;border:none;border-radius:5px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:4px}
+.fire:hover{background:var(--amber2)}
+.fire:disabled{background:var(--bg3);color:var(--muted);cursor:not-allowed}
+.fire.loading{background:#F5A62330;color:var(--amber)}
+.resp{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;font-size:10px;max-height:100px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;color:var(--subtle);margin-top:4px}
+.resp.ok{border-color:#05D39430;color:var(--green)}
+.resp.err{border-color:#EF456530;color:var(--red)}
+
+/* LOCKED STEP */
+.locked-step{padding:24px;text-align:center;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.lock-icon{font-size:28px}
+
+/* QR Scanner */
+.qrbox{border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s;background:var(--bg1)}
+.qrbox:hover{border-color:var(--amber)}
+.qrbox::after{content:'';position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:scan 2.2s linear infinite;top:0;opacity:.7}
+@keyframes scan{0%{top:0}100%{top:100%}}
+.qr-emoji{font-size:32px;margin:6px 0}
+.qr-token{font-size:10px;font-weight:700;letter-spacing:.12em;margin-top:4px}
+.qr-sub{font-size:9px;color:var(--muted);margin-top:4px}
+.qrbox.ready{border-color:#F5A62355;background:#F5A62308}
+.qrbox.consumed{border-color:#05D39455;background:#05D39408;opacity:.8}
+.qrbox.inactive{opacity:.35;cursor:not-allowed}
+.qrbox.inactive::after{display:none}
+
+/* Route selector */
+.route-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.ro{padding:8px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s}
+.ro:hover{border-color:var(--border2)}
+.ro.sel{border-color:var(--amber);background:#F5A62310}
+.ro-code{font-weight:700;font-size:11px;color:var(--amber)}
+.ro-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4}
+
+/* Token chain */
+.tchain{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.tc-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.tc-row{display:flex;gap:4px;align-items:center}
+.tc-arrow{color:var(--border2);font-size:10px}
+.tok{padding:4px 7px;border-radius:4px;font-size:10px;font-weight:700;border:1px solid;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:40px;transition:all .3s}
+.tok-pending{background:var(--bg);color:var(--muted);border-color:var(--border)}
+.tok-active{background:#F5A62318;color:var(--amber);border-color:#F5A62355}
+.tok-current{background:var(--amber);color:#07090E;border-color:var(--amber);box-shadow:0 0 8px #F5A62366;animation:glow .9s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 8px var(--amber)}50%{box-shadow:0 0 18px var(--amber),0 0 28px #F5A62344}}
+.tok-consumed{background:#05D39412;color:var(--green);border-color:#05D39444;opacity:.75}
+.tok-sub{font-size:7px;font-weight:400;text-transform:uppercase;letter-spacing:.04em}
+
+/* Variance indicator */
+.var-bar{height:4px;border-radius:2px;background:var(--bg3);overflow:hidden;margin-top:4px}
+.var-fill{height:100%;border-radius:2px;transition:width .4s,background .4s}
+
+/* RIGHT LOG */
+.logpanel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.lph{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.lp-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.lp-filters{margin-left:auto;display:flex;gap:3px}
+.lf{padding:2px 6px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;font-size:9px;transition:all .12s}
+.lf.on{background:var(--bg2);border-color:var(--border2);color:var(--text)}
+.logbody{flex:1;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:1px}
+.le{padding:4px 6px;border-radius:3px;font-size:10px;line-height:1.7;animation:pop .15s ease-out;border-left:2px solid transparent}
+@keyframes pop{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:translateY(0)}}
+.le-http{border-left-color:#F5A62355;background:#F5A62306}
+.le-ws{border-left-color:#4CC9F055;background:#4CC9F006}
+.le-ev{border-left-color:#05D39455;background:#05D39406}
+.le-db{border-left-color:#B5179E55;background:#B5179E06}
+.le-sys{border-left-color:var(--border);background:transparent}
+.ltime{color:var(--muted)}
+.ltag{padding:0 4px;border-radius:2px;font-size:9px;font-weight:700;margin:0 2px}
+.tag-http{background:#F5A62320;color:var(--amber)}
+.tag-ws{background:#4CC9F020;color:var(--blue)}
+.tag-ev{background:#05D39420;color:var(--green)}
+.tag-db{background:#B5179E20;color:var(--purple)}
+.tag-sys{background:var(--bg3);color:var(--muted)}
+.lpath{color:var(--blue)}
+.ls2{color:var(--green)}
+.ls4{color:var(--amber)}
+.ls5{color:var(--red)}
+
+/* BOTTOM */
+.bottom{background:var(--bg1);border-top:1px solid var(--border);display:grid;grid-template-rows:auto 1fr;overflow:hidden}
+.bhead{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.bh-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.bh-step{font-size:9px;color:var(--muted);margin-left:6px}
+.progress-scroll{overflow-x:auto;overflow-y:hidden;padding:12px 14px}
+.ptrack{display:flex;align-items:flex-start;gap:0;min-width:max-content}
+.pstep{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;margin:0 20px}
+.pstep+.pstep::before{content:'';position:absolute;right:calc(100% + 4px);top:13px;width:40px;height:1px;background:var(--border)}
+.pstep+.pstep.sdone::before{background:var(--green)}
+.pstep+.pstep.sactive::before{background:linear-gradient(90deg,var(--green),var(--amber))}
+.pdot{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .3s;z-index:1;font-weight:600}
+.pdot.sdone{border-color:var(--green);background:#05D39415;color:var(--green)}
+.pdot.sactive{border-color:var(--amber);background:#F5A62315;color:var(--amber);animation:glow .9s infinite}
+.plabel{font-size:8px;color:var(--muted);text-align:center;max-width:55px;line-height:1.4}
+.plabel.sdone{color:var(--green)}
+.plabel.sactive{color:var(--amber)}
+.glog{overflow-y:auto;padding:4px 12px;display:flex;flex-direction:column;gap:0}
+.gle{display:flex;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border);font-size:10px}
+.gle .gt{color:var(--muted);flex-shrink:0;font-size:9px;min-width:54px}
+.gle .ga{padding:0 5px;border-radius:2px;font-size:9px;font-weight:700;flex-shrink:0}
+.gle .gm{color:var(--subtle)}
+.gle.hi .gm{color:var(--text)}
+
+/* scrollbars */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.spinner{display:inline-block;width:10px;height:10px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.info-box{padding:8px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;font-size:10px;color:var(--muted);line-height:1.6}
+.info-box b{color:var(--text)}
+.info-box.warn{background:#EF456508;border-color:#EF456530;color:#EF4565bb}
+.info-box.success{background:#05D39408;border-color:#05D39430;color:#05D394bb}
+.info-box.amber{background:#F5A62308;border-color:#F5A62330;color:#F5A623bb}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo"><div class="logo-sq">F</div>FlexSend</div>
+  <div class="sep"></div>
+  <div class="tb-pill"><span class="tb-label">ENV</span><span class="tb-val">sandbox.flexsend.co.tz</span></div>
+  <div class="tb-pill">
+    <span class="dot dot-a" id="td-dot"></span>
+    <span class="tb-label">REF</span>
+    <span class="tb-val ref" id="td-ref">—</span>
+  </div>
+  <div class="tb-pill">
+    <span class="tb-label">STATUS</span>
+    <span class="tb-val pending" id="td-status">AWAITING BOOKING</span>
+  </div>
+  <div class="tb-pill">
+    <span class="tb-label">PARCEL</span>
+    <span class="tb-val" id="td-parcel">—</span>
+  </div>
+  <div class="tb-pill">
+    <span class="tb-label">ROUTE</span>
+    <span class="tb-val" id="td-route">—</span>
+  </div>
+  <div class="tb-pill">
+    <span class="tb-label">WEIGHT</span>
+    <span class="tb-val" id="td-weight">—</span>
+  </div>
+  <div class="tb-actions">
+    <button class="tbtn" onclick="resetAll()">↺ Reset</button>
+    <button class="tbtn danger" onclick="injectFraud()">⚡ Fraud</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-head">Actors — same parcel</div>
+    <div id="actor-list"></div>
+  </div>
+
+  <!-- MIDDLE -->
+  <div class="mid" id="actor-panel"></div>
+
+  <!-- LOG PANEL -->
+  <div class="logpanel">
+    <div class="lph">
+      <span class="lp-title">Live Requests</span>
+      <div class="lp-filters">
+        <button class="lf on" id="f-HTTP" onclick="toggleF('HTTP')">HTTP</button>
+        <button class="lf on" id="f-WS"   onclick="toggleF('WS')">WS</button>
+        <button class="lf on" id="f-EV"   onclick="toggleF('EV')">EVENT</button>
+        <button class="lf on" id="f-DB"   onclick="toggleF('DB')">DB</button>
+      </div>
+    </div>
+    <div class="logbody" id="req-log"></div>
+  </div>
+</div>
+
+<!-- BOTTOM -->
+<div class="bottom">
+  <div class="bhead">
+    <span class="bh-title">Delivery Journey</span>
+    <span class="bh-step" id="step-label">Step 0 / 12</span>
+    <div style="display:flex;gap:10px;margin-left:auto;align-items:center">
+      <span class="dot dot-g"></span><span style="font-size:9px;color:var(--muted)">done</span>
+      <span class="dot dot-a"></span><span style="font-size:9px;color:var(--muted)">active</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-rows:60px 1fr;overflow:hidden">
+    <div class="progress-scroll"><div class="ptrack" id="ptrack"></div></div>
+    <div class="glog" id="glog"></div>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<script>
+// ════════════════════════════════════════════════════════
+// SHARED STATE — single source of truth for the whole demo
+// ════════════════════════════════════════════════════════
+const S = {
+  // Created at booking
+  parcelId:        null,
+  bookingRef:      null,
+  routeCode:       'A1',
+  senderName:      'Amina Hassan',
+  senderPhone:     '+255712345678',
+  receiverName:    'Robert Mensah',
+  receiverPhone:   '+255787654321',
+  category:        'ELECTRONICS',
+  declaredWeight:  2.5,
+  declaredValue:   150000,
+  fragile:         false,
+  insurance:       false,
+  pickupAddress:   'Msimbazi St, Kariakoo, Dar es Salaam',
+  receiverAddress: 'Mapinduzi Rd, Mwanza',
+
+  // Set after events
+  confirmedWeight: null,
+  variancePct:     null,
+  boxSerial:       null,
+  riderId:         'rider-001',
+  riderName:       'John Mwamba',
+  jobId:           null,
+  priceTZS:        0,
+  paymentId:       null,
+
+  // Token chain
+  tokens: { L1:'pending', L2:'pending', L3:'pending', L4:'pending', L5:'pending', L6:'pending' },
+
+  // Progress
+  journeyStep: 0,
+
+  // Flags
+  paid:           false,
+  riderAssigned:  false,
+  riderAtSender:  false,
+  officeReceived: false,
+  measured:       false,
+  packed:         false,
+  dispatched:     false,
+  lastMileSet:    false,
+  delivered:      false,
+  fraudFlagged:   false,
+
+  activeActor: 'sender',
+  filters: { HTTP:true, WS:true, EV:true, DB:true },
+};
+
+// ════════════════════════════════════════════════════════
+// ACTORS
+// ════════════════════════════════════════════════════════
+const ACTORS = [
+  { id:'sender',   emoji:'👤', name:'Amina Hassan',   role:'Sender',         color:'#F5A623' },
+  { id:'agent',    emoji:'🏪', name:'Kariakoo Agent', role:'Agent',          color:'#B5179E' },
+  { id:'rider',    emoji:'🏍', name:'John Mwamba',    role:'Pickup Rider',   color:'#4CC9F0' },
+  { id:'worker',   emoji:'📦', name:'Grace Mwangi',   role:'Office Worker',  color:'#05D394' },
+  { id:'manager',  emoji:'🏢', name:'David Osei',     role:'Office Manager', color:'#FFD166' },
+  { id:'ops',      emoji:'🌍', name:'Admin Flex',     role:'Ops Admin',      color:'#EF4565' },
+  { id:'receiver', emoji:'📬', name:'Robert Mensah',  role:'Receiver',       color:'#05D394' },
+];
+
+const STEPS = [
+  { label:'OTP\nLogin',         actor:'sender'   },
+  { label:'Book\nParcel',       actor:'sender'   },
+  { label:'Payment\nConfirmed', actor:'sender'   },
+  { label:'Rider\nAssigned',    actor:'ops'      },
+  { label:'Rider\nPickup',      actor:'rider'    },
+  { label:'L1 Token\nScanned',  actor:'rider'    },
+  { label:'Office\nReceived',   actor:'worker'   },
+  { label:'Measured\n& Packed', actor:'worker'   },
+  { label:'Dispatched\nCourier',actor:'manager'  },
+  { label:'Last Mile\nAssigned',actor:'ops'      },
+  { label:'L6 Delivery\nScan',  actor:'rider'    },
+  { label:'Parcel\nDelivered',  actor:'receiver' },
+];
+
+// ════════════════════════════════════════════════════════
+// LOGGING
+// ════════════════════════════════════════════════════════
+function ts(){ return new Date().toISOString().slice(11,23); }
+
+function logReq(type, method, path, status, detail=''){
+  if(!S.filters[type]) return;
+  const le = document.getElementById('req-log');
+  const cls = {HTTP:'le-http',WS:'le-ws',EV:'le-ev',DB:'le-db',SYS:'le-sys'}[type]||'le-sys';
+  const tagCls = {HTTP:'tag-http',WS:'tag-ws',EV:'tag-ev',DB:'tag-db',SYS:'tag-sys'}[type]||'tag-sys';
+  const sCls = !status?'':status>=500?'ls5':status>=400?'ls4':'ls2';
+  le.innerHTML += `<div class="le ${cls}">
+    <span class="ltime">${ts()}</span>
+    <span class="ltag ${tagCls}">${type}</span>
+    ${method?`<span style="color:var(--amber);font-weight:700">${method}</span>`:''}
+    <span class="lpath">${path}</span>
+    ${status?`<span class="${sCls}">${status}</span>`:''}
+    ${detail?`<br><span style="color:var(--muted);padding-left:6px;font-size:9px">${detail}</span>`:''}
+  </div>`;
+  le.scrollTop = le.scrollHeight;
+}
+
+function logG(actor, msg, hi=false){
+  const el = document.getElementById('glog');
+  const a = ACTORS.find(x=>x.id===actor)||{emoji:'⚙',name:'System',color:'#4E5870'};
+  el.innerHTML += `<div class="gle${hi?' hi':''}">
+    <span class="gt">${ts()}</span>
+    <span class="ga" style="background:${a.color}1A;color:${a.color}">${a.emoji} ${a.name.split(' ')[0]}</span>
+    <span class="gm">${msg}</span>
+  </div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function toggleF(type){
+  S.filters[type] = !S.filters[type];
+  document.getElementById('f-'+type).classList.toggle('on', S.filters[type]);
+}
+
+// ════════════════════════════════════════════════════════
+// TOP BAR
+// ════════════════════════════════════════════════════════
+function updateTop(){
+  document.getElementById('td-ref').textContent    = S.bookingRef || '—';
+  document.getElementById('td-parcel').textContent = S.parcelId ? S.parcelId.slice(0,12)+'…' : '—';
+  document.getElementById('td-route').textContent  = S.routeCode || '—';
+  document.getElementById('td-weight').textContent = S.confirmedWeight
+    ? `${S.confirmedWeight}kg ✓` : (S.declaredWeight ? `${S.declaredWeight}kg` : '—');
+}
+
+function setStatus(txt, cls){
+  const el = document.getElementById('td-status');
+  el.textContent  = txt;
+  el.className    = 'tb-val ' + cls;
+  const dot = document.getElementById('td-dot');
+  dot.className   = 'dot ' + (cls==='delivered'?'dot-g':cls==='blocked'?'dot-r':'dot-a');
+}
+
+// ════════════════════════════════════════════════════════
+// JOURNEY PROGRESS
+// ════════════════════════════════════════════════════════
+function renderProgress(){
+  const t = document.getElementById('ptrack');
+  t.innerHTML = '';
+  STEPS.forEach((step, i) => {
+    const cls = i < S.journeyStep ? 'sdone' : i===S.journeyStep ? 'sactive' : '';
+    t.innerHTML += `<div class="pstep ${cls}">
+      <div class="pdot ${cls}">${i < S.journeyStep ? '✓' : i+1}</div>
+      <div class="plabel ${cls}">${step.label}</div>
+    </div>`;
+  });
+  document.getElementById('step-label').textContent = `Step ${S.journeyStep} / ${STEPS.length}`;
+}
+
+function advance(){ if(S.journeyStep < STEPS.length) S.journeyStep++; renderProgress(); }
+
+// ════════════════════════════════════════════════════════
+// TOKEN CHAIN HTML
+// ════════════════════════════════════════════════════════
+function tokenChainHTML(){
+  const labels = { L1:'Sender',L2:'Office',L3:'Seal',L4:'Open',L5:'Mile',L6:'Delivery' };
+  const toks = ['L1','L2','L3','L4','L5','L6'].map((t,i) => {
+    const st = S.tokens[t];
+    const cls = st==='current'?'tok-current':st==='consumed'?'tok-consumed':st==='active'?'tok-active':'tok-pending';
+    return `${i>0?'<span class="tc-arrow">›</span>':''}
+    <div class="tok ${cls}">
+      ${t}<div class="tok-sub">${labels[t]}</div>
+    </div>`;
+  }).join('');
+  return `<div class="tchain"><div class="tc-title">Custody Token Chain — ${S.bookingRef||'no parcel yet'}</div>
+    <div class="tc-row">${toks}</div></div>`;
+}
+
+// ════════════════════════════════════════════════════════
+// PARCEL BANNER (shown in every tab after booking)
+// ════════════════════════════════════════════════════════
+function parcelBannerHTML(){
+  if(!S.parcelId) return '';
+  return `<div class="parcel-banner">
+    <div class="pb-field"><div class="pb-key">Booking Ref</div><div class="pb-val hi">${S.bookingRef}</div></div>
+    <div class="pb-field"><div class="pb-key">Parcel ID</div><div class="pb-val" style="font-size:9px">${S.parcelId}</div></div>
+    <div class="pb-field"><div class="pb-key">Sender</div><div class="pb-val">${S.senderName}</div></div>
+    <div class="pb-field"><div class="pb-key">Receiver</div><div class="pb-val">${S.receiverName} · ${S.receiverPhone}</div></div>
+    <div class="pb-field"><div class="pb-key">Category</div><div class="pb-val">${S.category}${S.fragile?' · FRAGILE':''}</div></div>
+    <div class="pb-field"><div class="pb-key">Weight (declared)</div><div class="pb-val">${S.declaredWeight} kg</div></div>
+    ${S.confirmedWeight?`<div class="pb-field"><div class="pb-key">Weight (confirmed)</div><div class="pb-val" style="color:var(--green)">${S.confirmedWeight} kg ✓</div></div>`:''}
+    <div class="pb-field"><div class="pb-key">Route</div><div class="pb-val">${S.routeCode}</div></div>
+    ${S.boxSerial?`<div class="pb-field"><div class="pb-key">Box</div><div class="pb-val">${S.boxSerial}</div></div>`:''}
+    ${S.riderAssigned?`<div class="pb-field"><div class="pb-key">Rider</div><div class="pb-val">${S.riderName}</div></div>`:''}
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function acard(id, method, path, desc, fields, onFire, btnLabel='▶ Send Request'){
+  return `<div class="acard" id="card-${id}">
+    <div class="ah" onclick="toggleCard('${id}')">
+      <span class="meth m${method}">${method}</span>
+      <span class="ep">${path}</span>
+      <span class="adesc">${desc}</span>
+    </div>
+    <div class="abody hide" id="body-${id}">
+      ${fields}
+      <button class="fire" id="btn-${id}" onclick="${onFire}">${btnLabel}</button>
+      <div class="resp" id="res-${id}" style="display:none"></div>
+    </div>
+  </div>`;
+}
+
+function openCard(id){ document.getElementById('body-'+id)?.classList.remove('hide'); }
+function toggleCard(id){ document.getElementById('body-'+id)?.classList.toggle('hide'); }
+
+function setResp(id, data, err=false){
+  const el = document.getElementById('res-'+id);
+  if(!el) return;
+  el.style.display = 'block';
+  el.className = 'resp ' + (err?'err':'ok');
+  el.textContent = typeof data==='string'?data:JSON.stringify(data,null,2);
+}
+
+function setBtnLoad(id, loading){
+  const b = document.getElementById('btn-'+id);
+  if(!b) return;
+  b.innerHTML = loading ? '<span class="spinner"></span> Sending…' : '▶ Send Request';
+  b.classList.toggle('loading', loading);
+  b.disabled = loading;
+}
+
+// ════════════════════════════════════════════════════════
+// ACTOR SIDEBAR
+// ════════════════════════════════════════════════════════
+function actorStepStatus(id){
+  // Which step range each actor "owns"
+  const ownedSteps = {
+    sender:[0,1,2], agent:[], rider:[4,5,10], worker:[6,7], manager:[8], ops:[3,9], receiver:[11]
+  };
+  const steps = ownedSteps[id]||[];
+  if(steps.length===0) return 'none';
+  const maxDone = Math.max(...steps);
+  const minNeeded = Math.min(...steps);
+  if(S.journeyStep > maxDone) return 'done';
+  if(S.journeyStep >= minNeeded) return 'active';
+  return 'wait';
+}
+
+function renderSidebar(){
+  const list = document.getElementById('actor-list');
+  list.innerHTML = ACTORS.map(a => {
+    const st = actorStepStatus(a.id);
+    const badgeCls = st==='done'?'step-done':st==='active'?'step-active':'step-wait';
+    const badgeTxt = st==='done'?'✓':st==='active'?'●':'–';
+    return `<div class="actor-tab ${a.id===S.activeActor?'active':''}" id="atab-${a.id}" onclick="switchActor('${a.id}')">
+      <div class="av" style="background:${a.color}18;border-color:${a.color}44">${a.emoji}</div>
+      <div class="actor-info">
+        <div class="an">${a.name}</div>
+        <div class="ar">${a.role}</div>
+      </div>
+      <div class="step-badge ${badgeCls}">${badgeTxt}</div>
+    </div>`;
+  }).join('');
+}
+
+function switchActor(id){
+  S.activeActor = id;
+  renderSidebar();
+  renderPanel(id);
+}
+
+// ════════════════════════════════════════════════════════
+// PANEL RENDERER
+// ════════════════════════════════════════════════════════
+function renderPanel(id){
+  const a = ACTORS.find(x=>x.id===id);
+  const panel = document.getElementById('actor-panel');
+  panel.innerHTML = `
+    <div class="actor-hero">
+      <div class="hero-av" style="background:${a.color}18;border:1px solid ${a.color}44">${a.emoji}</div>
+      <div>
+        <div class="hero-name" style="color:${a.color}">${a.name}</div>
+        <div class="hero-sub">Role: ${a.role.toUpperCase().replace(/ /g,'_')} &nbsp;|&nbsp; x-user-id: ${id}-001</div>
+      </div>
+      <div class="jwt-chip" title="Bearer token used for all requests">🔑 eyJhbGciOiJSUzI1NiJ9.${btoa(JSON.stringify({user_id:id+'-001',role:a.role.toUpperCase().replace(/ /g,'_')})).slice(0,24)}…</div>
+    </div>
+    <div class="content" id="panel-content">${getPanelHTML(id)}</div>
+  `;
+  // auto-open first card
+  setTimeout(()=>{ document.querySelector('.abody.hide')&&document.querySelector('.ah')&&null; },50);
+}
+
+function getPanelHTML(id){
+  switch(id){
+    case 'sender':   return senderPanel();
+    case 'agent':    return agentPanel();
+    case 'rider':    return riderPanel();
+    case 'worker':   return workerPanel();
+    case 'manager':  return managerPanel();
+    case 'ops':      return opsPanel();
+    case 'receiver': return receiverPanel();
+    default: return '';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// SENDER PANEL
+// ════════════════════════════════════════════════════════
+function senderPanel(){
+  return `
+    <div class="slabel">Step 1 — Authenticate via OTP</div>
+    ${acard('otp-req','POST','/auth/otp/request','Request OTP',`
+      <div class="frow" style="grid-template-columns:1fr"><div class="fg">
+        <div class="fl">Phone Number</div>
+        <input class="fi" id="s-phone" value="${S.senderPhone}">
+      </div></div>`,
+    'sOtpReq()')}
+    ${acard('otp-ver','POST','/auth/otp/verify','Verify → JWT',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Phone</div><input class="fi" id="s-vphone" value="${S.senderPhone}"></div>
+        <div class="fg"><div class="fl">OTP Code</div><input class="fi" id="s-otp" value="847291"></div>
+      </div>`,
+    'sOtpVer()')}
+
+    <div class="slabel">Step 2 — Select Route</div>
+    <div class="route-grid">
+      <div class="ro ${S.routeCode==='A1'?'sel':''}" id="rt-A1" onclick="selRoute('A1')">
+        <div class="ro-code">A1 + D1</div>
+        <div class="ro-desc">Rider pickup → last-mile rider delivery</div>
+      </div>
+      <div class="ro ${S.routeCode==='A2'?'sel':''}" id="rt-A2" onclick="selRoute('A2')">
+        <div class="ro-code">A1 + D2</div>
+        <div class="ro-desc">Rider pickup → receiver self-pickup</div>
+      </div>
+      <div class="ro ${S.routeCode==='A3'?'sel':''}" id="rt-A3" onclick="selRoute('A3')">
+        <div class="ro-code">A3 + D1</div>
+        <div class="ro-desc">Agent dropoff → last-mile delivery</div>
+      </div>
+      <div class="ro ${S.routeCode==='B'?'sel':''}" id="rt-B" onclick="selRoute('B')">
+        <div class="ro-code">B — Intercity</div>
+        <div class="ro-desc">Multi-office box courier (upcountry)</div>
+      </div>
+    </div>
+
+    <div class="slabel">Step 3 — Book Parcel</div>
+    ${acard('s-book','POST','/parcels','Create booking',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Sender Name</div><input class="fi" id="s-sname" value="${S.senderName}"></div>
+        <div class="fg"><div class="fl">Sender Phone</div><input class="fi" id="s-sphone" value="${S.senderPhone}"></div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Receiver Name</div><input class="fi" id="s-rname" value="${S.receiverName}"></div>
+        <div class="fg"><div class="fl">Receiver Phone</div><input class="fi" id="s-rphone" value="${S.receiverPhone}"></div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="fg"><div class="fl">Category</div>
+          <select class="fsel" id="s-cat">
+            <option>ELECTRONICS</option><option>CLOTHING</option><option>DOCUMENTS</option><option>FRAGILE</option><option>FOOD</option>
+          </select></div>
+        <div class="fg"><div class="fl">Weight (kg)</div><input class="fi" id="s-wt" value="${S.declaredWeight}" type="number" step="0.1"></div>
+        <div class="fg"><div class="fl">Value (TZS)</div><input class="fi" id="s-val" value="${S.declaredValue}" type="number"></div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Fragile?</div>
+          <select class="fsel" id="s-frag"><option value="false">No</option><option value="true">Yes</option></select></div>
+        <div class="fg"><div class="fl">Insurance?</div>
+          <select class="fsel" id="s-ins"><option value="false">No</option><option value="true">Yes (+2%)</option></select></div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr"><div class="fg">
+        <div class="fl">Pickup Address</div><input class="fi" id="s-addr" value="${S.pickupAddress}">
+      </div></div>`,
+    'sBook()')}
+
+    ${S.parcelId ? `
+    <div class="slabel">Step 4 — Pay via Mobile Money</div>
+    ${acard('s-pay','POST','/payments','STK Push',`
+      ${parcelBannerHTML()}
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Phone</div><input class="fi auto" value="${S.senderPhone}" id="s-payphone"></div>
+        <div class="fg"><div class="fl">Provider</div>
+          <select class="fsel" id="s-prov"><option>MPESA</option><option>TIGO_PESA</option><option>AIRTEL_MONEY</option><option>HALOPESA</option></select>
+        </div>
+      </div>
+      <div class="info-box amber">💳 Amount: <b>TZS ${calcPrice()}</b> (${S.routeCode} · ${S.declaredWeight}kg${S.insurance?' + insurance':''})</div>`,
+    'sPay()')}` : ''}
+    ${tokenChainHTML()}
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+// AGENT PANEL
+// ════════════════════════════════════════════════════════
+function agentPanel(){
+  return `
+    ${S.parcelId ? parcelBannerHTML() : `<div class="info-box warn">⚠ No active parcel — book one as Sender first, or create an agent booking below</div>`}
+
+    <div class="slabel">Book on behalf of customer</div>
+    ${acard('ag-book','POST','/parcels','Agent booking',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Customer Name</div><input class="fi" id="ag-cn" value="${S.senderName}"></div>
+        <div class="fg"><div class="fl">Customer Phone</div><input class="fi" id="ag-cp" value="${S.senderPhone}"></div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Receiver Phone</div><input class="fi" id="ag-rp" value="${S.receiverPhone}"></div>
+        <div class="fg"><div class="fl">Weight (kg)</div><input class="fi" id="ag-wt" value="${S.declaredWeight}" type="number" step="0.1"></div>
+      </div>
+      <div class="info-box">Territory check: <b>ST_Within(GPS, agent_polygon)</b><br>Commission: <b>5%</b> locked at booking time</div>`,
+    'agBook()')}
+
+    <div class="slabel">Generate L2 Dropoff Token</div>
+    <div class="qrbox ${S.tokens.L2==='active'||S.tokens.L2==='current'?'ready':'inactive'}" onclick="agShowL2()">
+      <div class="qr-emoji">📋</div>
+      <div class="qr-token" style="color:var(--purple)">${S.parcelId ? 'L2-'+S.parcelId.slice(0,8).toUpperCase() : 'BOOK FIRST'}</div>
+      <div class="qr-sub">Agent dropoff QR · TTL 48h · Show to office worker</div>
+    </div>
+
+    <div class="slabel">Commission History</div>
+    ${acard('ag-comm','GET','/payments/commissions/{agentId}','Earnings','',
+    'agComm()')}
+    ${tokenChainHTML()}
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+// RIDER PANEL
+// ════════════════════════════════════════════════════════
+function riderPanel(){
+  const l1Ready = S.tokens.L1 === 'current';
+  const l6Ready = S.tokens.L6 === 'current';
+  return `
+    ${S.parcelId ? parcelBannerHTML() : `<div class="info-box warn">⚠ No assigned parcel yet — Ops must assign a job first</div>`}
+    ${S.riderAssigned ? `<div class="info-box success">✓ Job assigned: <b>${S.jobId}</b> · Parcel: <b>${S.bookingRef}</b> · Pickup from: <b>${S.senderName}</b> at ${S.pickupAddress}</div>` : ''}
+
+    <div class="slabel">Go Online</div>
+    ${acard('r-online','POST','/riders/{id}/online','Go online',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">GPS Lat</div><input class="fi" id="r-lat" value="-6.8160"></div>
+        <div class="fg"><div class="fl">GPS Lng</div><input class="fi" id="r-lng" value="39.2894"></div>
+      </div>`,
+    'rOnline()')}
+
+    <div class="slabel">Accept & Start Pickup Job</div>
+    ${acard('r-accept','POST','/riders/jobs/{jobId}/accept','Accept assigned job',
+    S.riderAssigned ? `<div class="info-box">Job: <b>${S.jobId||'job-001'}</b> · Parcel: <b>${S.bookingRef||'—'}</b><br>Pickup: <b>${S.pickupAddress}</b><br>Sender: <b>${S.senderName} ${S.senderPhone}</b></div>` : `<div class="info-box warn">No job assigned yet</div>`,
+    'rAccept()')}
+    ${acard('r-start','POST','/riders/jobs/{jobId}/start','EN_ROUTE to sender',
+    `<div class="info-box">Will set job status → <b>EN_ROUTE</b><br>Parcel: <b>${S.bookingRef||'—'}</b></div>`,
+    'rStart()')}
+
+    <div class="slabel">Scan L1 Token at Sender — ${S.senderName}</div>
+    <div class="qrbox ${l1Ready?'ready':S.tokens.L1==='consumed'?'consumed':'inactive'}" onclick="${l1Ready?'rScanL1()':'null'}">
+      <div class="qr-emoji">📱</div>
+      <div class="qr-token" style="color:${l1Ready?'var(--amber)':S.tokens.L1==='consumed'?'var(--green)':'var(--muted)'}">
+        ${S.tokens.L1==='consumed' ? 'L1 CONSUMED ✓' : S.parcelId ? 'L1-'+S.parcelId.slice(0,8).toUpperCase() : 'AWAITING BOOKING'}
+      </div>
+      <div class="qr-sub">POST /tokens/scan · Collect parcel from <b>${S.senderName}</b> · TTL 4h</div>
+    </div>
+
+    <div class="slabel">Last-Mile — Scan L6 Token at ${S.receiverName}</div>
+    <div class="qrbox ${l6Ready?'ready':S.tokens.L6==='consumed'?'consumed':'inactive'}" onclick="${l6Ready?'rScanL6()':'null'}">
+      <div class="qr-emoji">🏁</div>
+      <div class="qr-token" style="color:${l6Ready?'var(--amber)':S.tokens.L6==='consumed'?'var(--green)':'var(--muted)'}">
+        ${S.tokens.L6==='consumed' ? 'DELIVERED ✓' : S.parcelId && l6Ready ? 'L6-'+S.parcelId.slice(0,8).toUpperCase() : 'AWAITING DISPATCH'}
+      </div>
+      <div class="qr-sub">Deliver to <b>${S.receiverName}</b> at ${S.receiverAddress} · Anti-replay TTL 15min</div>
+    </div>
+    ${tokenChainHTML()}
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+// WORKER PANEL
+// ════════════════════════════════════════════════════════
+function workerPanel(){
+  const l2Ready = S.tokens.L2==='current';
+  const l3Ready = S.tokens.L3==='current';
+  return `
+    ${S.parcelId ? parcelBannerHTML() : `<div class="info-box warn">⚠ No parcel in transit yet — rider must pick up first</div>`}
+
+    <div class="slabel">Scan L2 — Receive parcel at office</div>
+    <div class="qrbox ${l2Ready?'ready':S.tokens.L2==='consumed'?'consumed':'inactive'}" onclick="${l2Ready?'wReceive()':'null'}">
+      <div class="qr-emoji">📦</div>
+      <div class="qr-token" style="color:${l2Ready?'var(--amber)':S.tokens.L2==='consumed'?'var(--green)':'var(--muted)'}">
+        ${S.tokens.L2==='consumed' ? 'RECEIVED ✓' : S.parcelId && l2Ready ? 'L2-'+S.parcelId.slice(0,8).toUpperCase() : 'AWAITING RIDER DELIVERY'}
+      </div>
+      <div class="qr-sub">Scan L2 from rider to intake parcel: <b>${S.bookingRef||'—'}</b> · Sender: <b>${S.senderName}</b></div>
+    </div>
+
+    <div class="slabel">Measurement Gate</div>
+    ${acard('w-meas','POST',`/parcels/{id}/measurement`,'Confirm weight',`
+      ${S.officeReceived ? parcelBannerHTML() : `<div class="info-box warn">Receive parcel first</div>`}
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Confirmed Weight (kg)</div><input class="fi" id="wm-wt" value="${S.confirmedWeight||S.declaredWeight||'2.5'}" type="number" step="0.01" oninput="liveVariance()"></div>
+        <div class="fg"><div class="fl">Declared Weight</div><input class="fi auto" value="${S.declaredWeight||'2.5'} kg" disabled></div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="fg"><div class="fl">Length (cm)</div><input class="fi" id="wm-len" value="32"></div>
+        <div class="fg"><div class="fl">Width (cm)</div><input class="fi" id="wm-w" value="22"></div>
+        <div class="fg"><div class="fl">Height (cm)</div><input class="fi" id="wm-h" value="18"></div>
+      </div>
+      <div id="var-box" style="margin-top:4px"></div>
+      <div class="info-box" style="margin-top:4px">
+        <span style="color:var(--green)">0–10% → CONFIRMED</span> &nbsp;
+        <span style="color:var(--amber)">10–20% → REPRICE customer</span> &nbsp;
+        <span style="color:var(--red)">&gt;20% → FRAUD FLAG + L4 alert</span>
+      </div>`,
+    'wMeasure()','⚖ Confirm Measurements')}
+
+    <div class="slabel">Pack & Assign to Box</div>
+    ${acard('w-pack','POST','/offices/{id}/pack','Assign to box',`
+      ${S.parcelId ? `<div class="info-box success">Parcel <b>${S.bookingRef}</b> ready to pack</div>` : ''}
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Box Serial</div>
+          <select class="fsel" id="wp-box"><option>FS-BOX-0041</option><option>FS-BOX-0042</option><option>FS-BOX-0043</option></select>
+        </div>
+        <div class="fg"><div class="fl">Layer</div>
+          <select class="fsel" id="wp-lay"><option>TOP</option><option>MIDDLE</option><option>BOTTOM</option></select>
+        </div>
+      </div>`,
+    'wPack()','📦 Pack & Seal')}
+
+    <div class="slabel">Scan L3 — Seal Box</div>
+    <div class="qrbox ${l3Ready?'ready':S.tokens.L3==='consumed'?'consumed':'inactive'}" onclick="${l3Ready?'wSealL3()':'null'}">
+      <div class="qr-emoji">🔒</div>
+      <div class="qr-token" style="color:${l3Ready?'var(--amber)':S.tokens.L3==='consumed'?'var(--green)':'var(--muted)'}">
+        ${S.tokens.L3==='consumed'?'SEALED ✓':S.boxSerial&&l3Ready?'L3-'+S.boxSerial:'PACK FIRST'}
+      </div>
+      <div class="qr-sub">Seal box <b>${S.boxSerial||'—'}</b> containing <b>${S.bookingRef||'—'}</b> · TTL 72h</div>
+    </div>
+    ${tokenChainHTML()}
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+// MANAGER PANEL
+// ════════════════════════════════════════════════════════
+function managerPanel(){
+  return `
+    ${S.parcelId ? parcelBannerHTML() : `<div class="info-box warn">⚠ No active parcel</div>`}
+
+    <div class="slabel">Dispatch Box to Intercity Courier</div>
+    ${acard('mg-disp','POST','/offices/{id}/dispatch','Hand to courier',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Box Serial</div><input class="fi auto" id="mg-box" value="${S.boxSerial||'FS-BOX-0041'}"></div>
+        <div class="fg"><div class="fl">Courier</div>
+          <select class="fsel" id="mg-cour"><option>INTERSTATE_COURIERS</option><option>TANROADS_EXPRESS</option><option>DARLINK_FREIGHT</option></select>
+        </div>
+      </div>
+      <div class="info-box">Parcel: <b>${S.bookingRef||'—'}</b> · Route: <b>${S.routeCode}</b><br>Dest: <b>${S.receiverAddress}</b> · Receiver: <b>${S.receiverName}</b><br>L3→L4 token exchange happens on dispatch</div>`,
+    'mgDispatch()','🚛 Dispatch to Courier')}
+
+    <div class="slabel">Manual Rider Assignment</div>
+    ${acard('mg-assign','POST','/riders/jobs/assign','Override ML assign',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Rider</div>
+          <select class="fsel" id="mg-rid"><option value="rider-001">John Mwamba (MOTO)</option><option value="rider-002">Sarah Kimani (BICYCLE)</option></select>
+        </div>
+        <div class="fg"><div class="fl">Job Type</div>
+          <select class="fsel" id="mg-jtype"><option>PICKUP</option><option>LAST_MILE_DELIVERY</option></select>
+        </div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr"><div class="fg">
+        <div class="fl">Override Reason</div><input class="fi" id="mg-rsn" value="ML unavailable — manual assignment">
+      </div></div>`,
+    'mgAssign()')}
+
+    <div class="slabel">Emergency Route Switch</div>
+    ${acard('mg-route','POST','/parcels/{id}/route-switch','9-step atomic swap',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">New Route</div>
+          <select class="fsel" id="mg-nrt"><option>A1-B-D1</option><option>A2-B-D2</option><option>A3-B-D1</option></select>
+        </div>
+        <div class="fg"><div class="fl">Emergency Bypass?</div>
+          <select class="fsel" id="mg-emg"><option value="false">No — lock enforced</option><option value="true">Yes — override lock</option></select>
+        </div>
+      </div>
+      <div class="info-box warn">Route locks after LAST_MILE_RIDER_DISPATCHED. Emergency requires OPS_ADMIN.</div>`,
+    'mgRouteSwitch()')}
+
+    <div class="slabel">Rider Suspend/Reactivate</div>
+    ${acard('mg-susp','PATCH','/riders/{id}/status','Change status',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Rider</div><input class="fi auto" value="${S.riderName}" disabled></div>
+        <div class="fg"><div class="fl">Status</div>
+          <select class="fsel" id="mg-st"><option>SUSPENDED</option><option>ACTIVE</option></select>
+        </div>
+      </div>
+      <div class="frow" style="grid-template-columns:1fr"><div class="fg">
+        <div class="fl">Reason</div><input class="fi" id="mg-sr" value="3 measurement disputes">
+      </div></div>`,
+    'mgSuspend()')}
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+// OPS PANEL
+// ════════════════════════════════════════════════════════
+function opsPanel(){
+  return `
+    ${S.parcelId ? parcelBannerHTML() : `<div class="info-box warn">⚠ No active parcel — book one first</div>`}
+
+    <div class="slabel">Step 1 — Get ML Rider Candidates</div>
+    ${acard('op-cands','GET','/riders/available','ML scoring pool',`
+      <div class="frow" style="grid-template-columns:1fr 1fr">
+        <div class="fg"><div class="fl">Office</div><input class="fi" id="op-off" value="office-dsm-kariakoo"></div>
+        <div class="fg"><div class="fl">Job Type</div>
+          <select class="fsel" id="op-jt"><option>PICKUP</option><option>LAST_MILE_DELIVERY</option></select>
+        </div>
+      </div>`,
+    'opCandidates()')}
+
+    <div class="slabel">Step 2 — Auto-Assign Best Rider</div>
+    ${acard('op-assign','POST','/riders/jobs/assign','ML assign with Redis lock',`
+      <div class="info-box">Parcel: <b>${S.bookingRef||'—'}</b> · Route: <b>${S.routeCode}</b><br>
+      Redis lock: <b>assign_lock:${S.parcelId?.slice(0,8)||'prcl-xxx'}</b> (30s TTL — prevents race)<br>
+      Capacity: <b>${S.declaredWeight}kg</b> · Rider: <b>${S.riderName}</b></div>`,
+    'opAssign()','🏍 Auto-Assign Rider')}
+
+    <div class="slabel">Assign Last-Mile Rider (at dest office)</div>
+    ${acard('op-lastmile','POST','/riders/jobs/assign','Last mile + L6 generation',`
+      <div class="info-box">Parcel: <b>${S.bookingRef||'—'}</b><br>Deliver to: <b>${S.receiverName} · ${S.receiverPhone}</b><br>Address: <b>${S.receiverAddress}</b><br>
+      L5→consumed, L6 generated (anti-replay TTL 15min)</div>`,
+    'opLastMile()','🚀 Assign Last Mile + Issue L6')}
+
+    <div class="slabel">Live Network</div>
+    ${acard('op-net','GET','/tracking/live-network','All riders + boxes','',
+    'opNetwork()')}
+    ${acard('op-alerts','GET','/ml/alerts','Active ML alerts','',
+    'opAlerts()')}
+    ${tokenChainHTML()}
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+// RECEIVER PANEL
+// ════════════════════════════════════════════════════════
+function receiverPanel(){
+  const l6Ready = S.tokens.L6==='current';
+  return `
+    ${S.parcelId ? parcelBannerHTML() : `<div class="info-box warn">⚠ No parcel tracked yet</div>`}
+
+    <div class="slabel">Track Your Parcel (no auth required)</div>
+    ${acard('rv-track','GET','/parcels/track/{bookingRef}','Public tracking',`
+      <div class="frow" style="grid-template-columns:1fr"><div class="fg">
+        <div class="fl">Booking Reference</div>
+        <input class="fi auto" id="rv-ref" value="${S.bookingRef||'—'}">
+      </div></div>`,
+    'rvTrack()')}
+
+    <div class="slabel">Sign for Delivery — Scan L6 Token from Rider</div>
+    <div class="qrbox ${l6Ready?'ready':S.tokens.L6==='consumed'?'consumed':'inactive'}" onclick="${l6Ready?'rvSign()':'null'}">
+      <div class="qr-emoji">${S.tokens.L6==='consumed'?'🎉':'✍️'}</div>
+      <div class="qr-token" style="color:${l6Ready?'var(--amber)':S.tokens.L6==='consumed'?'var(--green)':'var(--muted)'}">
+        ${S.tokens.L6==='consumed' ? 'PARCEL DELIVERED ✓' : l6Ready ? 'L6-'+S.parcelId.slice(0,8).toUpperCase()+' — SIGN NOW' : 'AWAITING RIDER'}
+      </div>
+      <div class="qr-sub">
+        ${S.tokens.L6==='consumed'
+          ? `Signed by <b>${S.receiverName}</b> · Booking: <b>${S.bookingRef}</b>`
+          : `Rider presents QR · You confirm receipt · Parcel: <b>${S.bookingRef||'—'}</b>`}
+      </div>
+    </div>
+
+    ${S.delivered ? `<div class="info-box success" style="text-align:center;padding:16px">
+      <div style="font-size:24px;margin-bottom:6px">🎉</div>
+      <b>Parcel delivered!</b><br>
+      Booking: <b>${S.bookingRef}</b><br>
+      Received by: <b>${S.receiverName}</b><br>
+      Sender: <b>${S.senderName}</b>
+    </div>` : ''}
+
+    <div class="slabel">OTP Delivery Confirm (alternative)</div>
+    ${acard('rv-otp','POST',`/parcels/{id}/confirm-delivery-otp`,'SMS OTP confirm',`
+      <div class="frow" style="grid-template-columns:1fr"><div class="fg">
+        <div class="fl">OTP (sent to ${S.receiverPhone})</div>
+        <input class="fi" id="rv-otp" value="382947">
+      </div></div>`,
+    'rvOTP()')}
+
+    <div class="slabel">Raise Return Request</div>
+    ${acard('rv-return','POST','/parcels/{id}/return','Initiate return',`
+      <div class="frow" style="grid-template-columns:1fr"><div class="fg">
+        <div class="fl">Reason</div>
+        <select class="fsel" id="rv-rsn"><option>WRONG_ITEM</option><option>DAMAGED</option><option>NOT_ORDERED</option></select>
+      </div></div>`,
+    'rvReturn()')}
+    ${tokenChainHTML()}
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════
+function calcPrice(){
+  const base = 5000;
+  const wt = S.declaredWeight||2.5;
+  const mult = wt<=1?1:wt<=3?1.8:wt<=5?2.5:wt<=10?3.2:4.0;
+  let p = base * mult;
+  if(S.insurance) p *= 1.02;
+  if(S.fragile) p += 2000;
+  S.priceTZS = Math.round(p);
+  return S.priceTZS.toLocaleString();
+}
+
+function liveVariance(){
+  const el = document.getElementById('var-box');
+  if(!el) return;
+  const confirmed = parseFloat(document.getElementById('wm-wt')?.value||'0');
+  const declared  = S.declaredWeight||2.5;
+  if(!confirmed||confirmed<=0){ el.innerHTML=''; return; }
+  const pct = Math.abs((confirmed-declared)/declared)*100;
+  const color = pct<10?'var(--green)':pct<20?'var(--amber)':'var(--red)';
+  const label = pct<10?'CONFIRMED':pct<20?'REPRICING TRIGGERED':'FRAUD FLAG';
+  const finalLabel = pct<10?'CONFIRMED':pct<20?'REPRICING TRIGGERED':'FRAUD FLAG';
+  el.innerHTML = `<div style="padding:6px 8px;border-radius:4px;border:1px solid ${color}44;background:${color}10;color:${color};font-size:10px;font-weight:600">
+    ${finalLabel} — ${pct.toFixed(1)}% variance (declared ${declared}kg → confirmed ${confirmed}kg)
+    <div class="var-bar"><div class="var-fill" style="width:${Math.min(100,pct*4)}%;background:${color}"></div></div>
+  </div>`;
+}
+
+function refreshCurrentPanel(){ renderPanel(S.activeActor); }
+function refreshTokens(){
+  document.querySelectorAll('.tchain').forEach(el=>{
+    const labels={L1:'Sender',L2:'Office',L3:'Seal',L4:'Open',L5:'Mile',L6:'Delivery'};
+    const toks=['L1','L2','L3','L4','L5','L6'].map((t,i)=>{
+      const st=S.tokens[t];
+      const cls=st==='current'?'tok-current':st==='consumed'?'tok-consumed':st==='active'?'tok-active':'tok-pending';
+      return `${i>0?'<span class="tc-arrow">›</span>':''}<div class="tok ${cls}">${t}<div class="tok-sub">${labels[t]}</div></div>`;
+    }).join('');
+    el.innerHTML=`<div class="tc-title">Custody Token Chain — ${S.bookingRef||'no parcel yet'}</div><div class="tc-row">${toks}</div>`;
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// ── SENDER HANDLERS
+// ════════════════════════════════════════════════════════
+async function sOtpReq(){
+  const phone = document.getElementById('s-phone')?.value||S.senderPhone;
+  S.senderPhone = phone;
+  setBtnLoad('otp-req',true); await delay(600);
+  logReq('HTTP','POST','/auth/otp/request',200,`{"phone":"${phone}"}`);
+  logReq('DB','','→ INSERT otp_codes (expires=5m, attempts=0)','');
+  setResp('otp-req',{success:true,message:`OTP sent to ${phone}`,expires_in:'5m'});
+  logG('sender',`OTP requested for ${phone}`);
+  advance(); setBtnLoad('otp-req',false);
+}
+
+async function sOtpVer(){
+  setBtnLoad('otp-ver',true); await delay(800);
+  logReq('HTTP','POST','/auth/otp/verify',200,'{"otp":"847291"}');
+  logReq('DB','','→ SELECT otp_codes WHERE phone=… AND used=false ✓','');
+  logReq('DB','','→ UPDATE otp_codes SET used=true','');
+  logReq('DB','','→ INSERT refresh_tokens (user_id=send-user-001, TTL=7d)','');
+  setResp('otp-ver',{success:true,access_token:'eyJhbGciOiJSUzI1NiJ9…',role:'SENDER',expires_in:'15m'});
+  logG('sender','Authenticated ✓ — RS256 JWT issued',true);
+  advance(); setBtnLoad('otp-ver',false);
+}
+
+function selRoute(code){
+  S.routeCode=code;
+  document.querySelectorAll('.ro').forEach(el=>el.classList.remove('sel'));
+  document.getElementById('rt-'+code)?.classList.add('sel');
+  logG('sender',`Route selected: ${code}`);
+  updateTop();
+}
+
+async function sBook(){
+  S.senderName   = document.getElementById('s-sname')?.value||S.senderName;
+  S.senderPhone  = document.getElementById('s-sphone')?.value||S.senderPhone;
+  S.receiverName = document.getElementById('s-rname')?.value||S.receiverName;
+  S.receiverPhone= document.getElementById('s-rphone')?.value||S.receiverPhone;
+  S.category     = document.getElementById('s-cat')?.value||S.category;
+  S.declaredWeight = parseFloat(document.getElementById('s-wt')?.value)||S.declaredWeight;
+  S.declaredValue  = parseInt(document.getElementById('s-val')?.value)||S.declaredValue;
+  S.fragile      = document.getElementById('s-frag')?.value==='true';
+  S.insurance    = document.getElementById('s-ins')?.value==='true';
+  S.pickupAddress= document.getElementById('s-addr')?.value||S.pickupAddress;
+
+  setBtnLoad('s-book',true); await delay(1000);
+  S.parcelId   = 'prcl-'+Math.random().toString(36).slice(2,10);
+  S.bookingRef = 'TZ-'+String(10000+Math.floor(Math.random()*89999));
+  calcPrice();
+
+  logReq('HTTP','POST','/parcels',201,`{"route_code":"${S.routeCode}","declared_weight_kg":${S.declaredWeight}}`);
+  logReq('DB','','→ BEGIN TRANSACTION','');
+  logReq('DB','','→ INSERT parcels (id='+S.parcelId.slice(0,14)+'…)','');
+  logReq('DB','','→ INSERT tokens (L1, TTL=4h, parcel_id='+S.parcelId.slice(0,10)+'…)','');
+  logReq('DB','','→ INSERT parcel_events (PARCEL_CREATED, seq=1)','');
+  logReq('DB','','→ COMMIT','');
+  logReq('EV','','→ PARCEL_CREATED published to QStash parcel.events','');
+  logReq('WS','','→ Redis PUBLISH parcel:'+S.parcelId.slice(0,8)+' {status:PENDING_PAYMENT}','');
+
+  S.tokens.L1 = 'current';
+  setResp('s-book',{success:true,data:{parcel_id:S.parcelId,booking_reference:S.bookingRef,route_code:S.routeCode,status:'PENDING_PAYMENT',price_estimate_tzs:S.priceTZS}});
+  setStatus('PENDING PAYMENT','pending');
+  updateTop();
+  logG('sender',`Parcel booked → ${S.bookingRef} · TZS ${S.priceTZS.toLocaleString()}`,true);
+  advance();
+  refreshCurrentPanel(); // re-render to show payment section
+  setBtnLoad('s-book',false);
+}
+
+async function sPay(){
+  if(!S.parcelId){setResp('s-pay','Book a parcel first',true);return;}
+  setBtnLoad('s-pay',true);
+  const phone = document.getElementById('s-payphone')?.value||S.senderPhone;
+  const prov  = document.getElementById('s-prov')?.value||'MPESA';
+  await delay(400);
+  logReq('HTTP','POST','/payments',201,`{"parcel_id":"${S.parcelId.slice(0,12)}","provider":"${prov}","phone":"${phone}"}`);
+  await delay(500);
+  logReq('HTTP','POST',`→ AzamPay STK Push (${prov})`,200,'{"status":"PENDING"}');
+  await delay(900);
+  logReq('EV','','→ payment.webhook received from AzamPay','');
+  logReq('DB','','→ UPDATE payments SET status=CONFIRMED','');
+  logReq('EV','','→ PAYMENT_CONFIRMED published','');
+  logReq('EV','','→ PARCEL_READY_FOR_PICKUP published to QStash','');
+  logReq('DB','','→ UPDATE parcels SET status=AWAITING_PICKUP','');
+  S.paymentId = 'pay-'+S.parcelId.slice(0,8);
+  S.paid = true;
+  setResp('s-pay',{success:true,data:{payment_id:S.paymentId,status:'CONFIRMED',amount_tzs:S.priceTZS,provider:prov}});
+  setStatus('AWAITING PICKUP','transit');
+  logG('sender',`Payment confirmed TZS ${S.priceTZS.toLocaleString()} via ${prov}`,true);
+  advance();
+  setBtnLoad('s-pay',false);
+}
+
+// ════════════════════════════════════════════════════════
+// ── AGENT HANDLERS
+// ════════════════════════════════════════════════════════
+async function agBook(){
+  setBtnLoad('ag-book',true); await delay(900);
+  S.senderName = document.getElementById('ag-cn')?.value||S.senderName;
+  S.senderPhone= document.getElementById('ag-cp')?.value||S.senderPhone;
+  S.receiverPhone=document.getElementById('ag-rp')?.value||S.receiverPhone;
+  S.declaredWeight=parseFloat(document.getElementById('ag-wt')?.value)||S.declaredWeight;
+  S.parcelId  = 'prcl-'+Math.random().toString(36).slice(2,10);
+  S.bookingRef= 'TZ-'+String(10000+Math.floor(Math.random()*89999));
+  S.routeCode = 'A3-D1';
+  logReq('HTTP','POST','/parcels',201,'{"actor_type":"AGENT","route_code":"A3-D1"}');
+  logReq('DB','','→ ST_Within(gps, agent_polygon) = TRUE ✓','');
+  logReq('DB','','→ INSERT parcels (agent_id=agent-001, commission_rate=0.05 LOCKED)','');
+  logReq('DB','','→ INSERT tokens (L2, TTL=48h — agent dropoff token)','');
+  logReq('EV','','→ PARCEL_CREATED published','');
+  S.tokens.L2 = 'active';
+  setResp('ag-book',{success:true,data:{booking_reference:S.bookingRef,parcel_id:S.parcelId,commission_locked:'5%',territory_check:'PASSED'}});
+  setStatus('AGENT DROPOFF','transit');
+  updateTop();
+  logG('agent',`Booked ${S.bookingRef} for ${S.senderName} — L2 QR ready`,true);
+  refreshCurrentPanel();
+  setBtnLoad('ag-book',false);
+}
+
+async function agShowL2(){
+  if(!S.parcelId){logG('agent','Book a parcel first');return;}
+  logReq('HTTP','GET',`/tokens/L2-${S.parcelId.slice(0,8).toUpperCase()}`,200,'');
+  logG('agent',`L2 token displayed — show to office worker`);
+}
+
+async function agComm(){
+  setBtnLoad('ag-comm',true); await delay(500);
+  logReq('HTTP','GET','/payments/commissions/agent-001',200,'');
+  logReq('DB','','→ SELECT agent_commissions GROUP BY month','');
+  setResp('ag-comm',{total_earned_tzs:47350,this_month_tzs:8200,pending_tzs:1250,last_payout:'2024-01-10'});
+  setBtnLoad('ag-comm',false);
+}
+
+// ════════════════════════════════════════════════════════
+// ── RIDER HANDLERS
+// ════════════════════════════════════════════════════════
+async function rOnline(){
+  setBtnLoad('r-online',true); await delay(500);
+  const lat=document.getElementById('r-lat')?.value;
+  const lng=document.getElementById('r-lng')?.value;
+  logReq('HTTP','POST','/riders/rider-001/online',200,`{"gps_lat":${lat},"gps_lng":${lng}}`);
+  logReq('DB','','→ UPDATE riders SET availability=ONLINE','');
+  logReq('DB','','→ REDIS SET rider:rider-001:online=1','');
+  logReq('DB','','→ REDIS GEOADD geo:riders:office-001 '+lng+' '+lat+' rider-001','');
+  setResp('r-online',{success:true,data:{rider_id:'rider-001',availability:'ONLINE',gps_recorded:true}});
+  logG('rider',`${S.riderName} online at (${lat},${lng})`);
+  setBtnLoad('r-online',false);
+}
+
+async function rAccept(){
+  if(!S.riderAssigned){setResp('r-accept','No job assigned — Ops must assign first',true);return;}
+  setBtnLoad('r-accept',true); await delay(500);
+  logReq('HTTP','POST',`/riders/jobs/${S.jobId}/accept`,200,'');
+  logReq('DB','','→ UPDATE rider_jobs SET status=ACCEPTED','');
+  logReq('EV','','→ RIDER_JOB_ACCEPTED published','');
+  setResp('r-accept',{success:true,data:{job_id:S.jobId,parcel:S.bookingRef,pickup_from:S.senderName,address:S.pickupAddress,status:'ACCEPTED'}});
+  logG('rider',`Job accepted — pickup: ${S.senderName} at ${S.pickupAddress}`);
+  setBtnLoad('r-accept',false);
+}
+
+async function rStart(){
+  setBtnLoad('r-start',true); await delay(400);
+  logReq('HTTP','POST',`/riders/jobs/${S.jobId||'job-001'}/start`,200,'');
+  logReq('DB','','→ UPDATE rider_jobs SET status=EN_ROUTE','');
+  logReq('EV','','→ RIDER_JOB_STARTED published','');
+  setResp('r-start',{success:true,data:{job_id:S.jobId,status:'EN_ROUTE',parcel:S.bookingRef,heading_to:S.senderName}});
+  logG('rider',`EN_ROUTE → ${S.senderName}`);
+  setBtnLoad('r-start',false);
+}
+
+async function rScanL1(){
+  if(!S.parcelId||S.tokens.L1!=='current'){logG('rider','L1 not active');return;}
+  logReq('HTTP','POST','/tokens/scan',200,`{"token_id":"L1-${S.parcelId.slice(0,8).toUpperCase()}","scanner":"rider-001"}`);
+  logReq('DB','','→ BEGIN TRANSACTION','');
+  logReq('DB','','→ SELECT tokens WHERE token_id=L1-… FOR UPDATE','');
+  logReq('DB','','→ UPDATE tokens SET status=CONSUMED (L1)','');
+  logReq('DB','','→ INSERT tokens (L2, TTL=48h, office_id=office-dsm-kariakoo)','');
+  logReq('DB','','→ UPDATE parcels SET status=COLLECTED_BY_RIDER','');
+  logReq('DB','','→ INSERT parcel_events (PARCEL_COLLECTED_BY_RIDER, seq=3)','');
+  logReq('DB','','→ COMMIT','');
+  logReq('EV','','→ PARCEL_COLLECTED_BY_RIDER published','');
+  logReq('WS','','→ Redis PUBLISH parcel:'+S.parcelId.slice(0,8)+' {status:COLLECTED}','');
+  S.tokens.L1='consumed'; S.tokens.L2='current';
+  setStatus('COLLECTED BY RIDER','transit');
+  updateTop(); refreshTokens();
+  refreshCurrentPanel();
+  logG('rider',`L1 scanned at ${S.senderName} ✓ — parcel collected`,true);
+  advance();
+}
+
+// ════════════════════════════════════════════════════════
+// ── WORKER HANDLERS
+// ════════════════════════════════════════════════════════
+async function wReceive(){
+  if(!S.parcelId||S.tokens.L2!=='current'){logG('worker','L2 not active — rider must deliver first');return;}
+  logReq('HTTP','POST','/offices/office-001/receive',200,`{"token":"L2-${S.parcelId.slice(0,8).toUpperCase()}"}`);
+  logReq('DB','','→ UPDATE tokens SET status=CONSUMED (L2)','');
+  logReq('DB','','→ UPDATE parcels SET status=AT_ORIGIN_OFFICE, arrived_at=NOW()','');
+  logReq('DB','','→ INSERT parcel_events (PARCEL_OFFICE_RECEIVED, seq=4)','');
+  logReq('WS','','→ Redis PUBLISH office:office-001:operations {parcel_arrived}','');
+  S.tokens.L2='consumed'; S.officeReceived=true;
+  setStatus('AT OFFICE','transit');
+  updateTop(); refreshTokens();
+  refreshCurrentPanel();
+  logG('worker',`${S.bookingRef} received at DSM Kariakoo ✓ — SLA 4h started`,true);
+  advance();
+}
+
+async function wMeasure(){
+  if(!S.officeReceived){setResp('w-meas','Receive parcel first',true);return;}
+  setBtnLoad('w-meas',true);
+  const confirmed = parseFloat(document.getElementById('wm-wt')?.value||String(S.declaredWeight));
+  const variance  = Math.abs((confirmed-S.declaredWeight)/S.declaredWeight)*100;
+  S.confirmedWeight = confirmed;
+  S.variancePct = variance;
+  await delay(900);
+
+  const result = variance<10?'CONFIRMED':variance<20?'REPRICING_TRIGGERED':'FRAUD_FLAGGED';
+  logReq('HTTP','POST',`/parcels/${S.parcelId.slice(0,12)}/measurement`,200,`{"confirmed_weight_kg":${confirmed}}`);
+  logReq('DB','','→ UPDATE parcels SET confirmed_weight_kg='+confirmed,'');
+  logReq('DB','','→ INSERT parcel_events (PARCEL_MEASUREMENT_CONFIRMED)','');
+  if(result==='REPRICING_TRIGGERED'){
+    logReq('EV','','→ PARCEL_REPRICING_TRIGGERED published','');
+    logReq('DB','','→ STK push to '+S.senderPhone+' for TZS 3,500 difference','');
+    setStatus('REPRICING','blocked');
+  } else if(result==='FRAUD_FLAGGED'){
+    S.fraudFlagged=true;
+    logReq('EV','','→ PARCEL_FRAUD_FLAGGED published','');
+    logReq('EV','','→ ML_ALERT_LEVEL_4 raised','');
+    setStatus('FRAUD FLAGGED','blocked');
+  } else {
+    logReq('EV','','→ PARCEL_MEASUREMENT_CONFIRMED published','');
+  }
+  S.measured=true;
+  setResp('w-meas',{success:true,result,declared_kg:S.declaredWeight,confirmed_kg:confirmed,variance_pct:variance.toFixed(1)+'%'});
+  updateTop(); refreshTokens();
+  logG('worker',`Measured: ${confirmed}kg vs declared ${S.declaredWeight}kg → ${result}`,result!=='CONFIRMED');
+  if(result==='CONFIRMED') advance();
+  setBtnLoad('w-meas',false);
+}
+
+async function wPack(){
+  setBtnLoad('w-pack',true);
+  S.boxSerial = document.getElementById('wp-box')?.value||'FS-BOX-0041';
+  await delay(700);
+  logReq('HTTP','POST','/offices/office-001/pack',200,`{"box_serial":"${S.boxSerial}"}`);
+  logReq('DB','','→ INSERT box_parcels (parcel_id, box_id, position=TOP)','');
+  logReq('DB','','→ UPDATE boxes SET current_parcel_count += 1','');
+  logReq('DB','','→ UPDATE parcels SET status=PACKING','');
+  logReq('DB','','→ INSERT tokens (L3, TTL=72h, box_id='+S.boxSerial+')','');
+  logReq('EV','','→ PARCEL_PACKED published','');
+  S.tokens.L3='current'; S.packed=true;
+  setResp('w-pack',{success:true,data:{box_serial:S.boxSerial,parcel:S.bookingRef,position:'TOP',l3_token_ready:true}});
+  updateTop(); refreshTokens();
+  refreshCurrentPanel();
+  logG('worker',`${S.bookingRef} packed into ${S.boxSerial} ✓ — L3 seal token ready`,true);
+  setBtnLoad('w-pack',false);
+}
+
+async function wSealL3(){
+  if(S.tokens.L3!=='current'){logG('worker','Pack parcel first');return;}
+  logReq('HTTP','POST','/tokens/scan',200,`{"token_id":"L3-${S.boxSerial}","action":"BOX_SEAL"}`);
+  logReq('DB','','→ UPDATE tokens SET status=CONSUMED (L3)','');
+  logReq('DB','','→ UPDATE parcels SET status=PACKED','');
+  logReq('DB','','→ INSERT tokens (L4, box_id='+S.boxSerial+', TTL=168h)','');
+  logReq('DB','','→ INSERT parcel_events (PARCEL_BOX_SEALED)','');
+  S.tokens.L3='consumed'; S.tokens.L4='active';
+  refreshTokens(); refreshCurrentPanel();
+  logG('worker',`Box ${S.boxSerial} SEALED ✓ — L4 box-open token ready for courier`,true);
+  advance();
+}
+
+// ════════════════════════════════════════════════════════
+// ── MANAGER HANDLERS
+// ════════════════════════════════════════════════════════
+async function mgDispatch(){
+  setBtnLoad('mg-disp',true);
+  const courier = document.getElementById('mg-cour')?.value||'INTERSTATE_COURIERS';
+  await delay(900);
+  logReq('HTTP','POST','/offices/office-001/dispatch',200,`{"box_serial":"${S.boxSerial}","courier":"${courier}"}`);
+  logReq('DB','','→ UPDATE tokens: L4 → CURRENT (courier-open token)','');
+  logReq('DB','','→ UPDATE boxes SET status=IN_TRANSIT','');
+  logReq('DB','','→ UPDATE parcels SET status=IN_TRANSIT_INTERCITY','');
+  logReq('DB','','→ INSERT parcel_events (PARCEL_BOX_HANDED_TO_COURIER)','');
+  logReq('EV','','→ PARCEL_BOX_HANDED_TO_COURIER published','');
+  logReq('WS','','→ Redis PUBLISH ops:network:overview {box_in_transit}','');
+  S.tokens.L4='current'; S.dispatched=true;
+  setResp('mg-disp',{success:true,data:{box_serial:S.boxSerial,courier,parcel:S.bookingRef,dest_receiver:S.receiverName,estimated:'8–12h'}});
+  setStatus('IN TRANSIT','transit');
+  updateTop(); refreshTokens();
+  logG('manager',`${S.boxSerial} dispatched via ${courier} → ${S.receiverAddress}`,true);
+  advance();
+  setBtnLoad('mg-disp',false);
+}
+
+async function mgAssign(){
+  setBtnLoad('mg-assign',true);
+  const riderId = document.getElementById('mg-rid')?.value;
+  const jtype   = document.getElementById('mg-jtype')?.value;
+  const reason  = document.getElementById('mg-rsn')?.value;
+  await delay(700);
+  logReq('HTTP','POST','/riders/jobs/assign',201,`{"rider_id":"${riderId}","job_type":"${jtype}"}`);
+  logReq('DB','','→ REDIS SET assign_lock:'+S.parcelId?.slice(0,8)+' = 1 (TTL=30s)','');
+  logReq('DB','','→ checkCapacity: '+S.declaredWeight+'kg < 15kg max ✓','');
+  logReq('DB','','→ INSERT rider_jobs (status=ASSIGNED)','');
+  logReq('DB','','→ UPDATE riders SET availability=ON_JOB','');
+  logReq('DB','','→ REDIS DEL assign_lock:'+S.parcelId?.slice(0,8),'');
+  logReq('EV','','→ RIDER_JOB_ASSIGNED published','');
+  S.riderAssigned=true; S.jobId='job-'+Date.now().toString(36);
+  S.riderId=riderId; S.riderName=riderId==='rider-001'?'John Mwamba':'Sarah Kimani';
+  setResp('mg-assign',{success:true,data:{job_id:S.jobId,rider_id:riderId,parcel:S.bookingRef,status:'ASSIGNED',earning_amount:1500}});
+  logG('manager',`${S.riderName} assigned job ${S.jobId} for ${S.bookingRef}`,true);
+  setBtnLoad('mg-assign',false);
+}
+
+async function mgRouteSwitch(){
+  setBtnLoad('mg-route',true);
+  const emergency = document.getElementById('mg-emg')?.value==='true';
+  const newRoute  = document.getElementById('mg-nrt')?.value;
+  await delay(800);
+  if(!emergency){
+    logReq('HTTP','POST',`/parcels/${S.parcelId?.slice(0,12)||'N/A'}/route-switch`,423,'');
+    logReq('DB','','→ Lock check: route locked after LAST_MILE_RIDER_DISPATCHED','');
+    setResp('mg-route',{success:false,code:'ROUTE_LOCKED',message:'Set emergency=true (OPS_ADMIN only) to override'},true);
+  } else {
+    logReq('HTTP','POST',`/parcels/${S.parcelId?.slice(0,12)}/route-switch`,200,'{"emergency":true}');
+    for(let i=1;i<=9;i++){
+      await delay(100);
+      const steps=['Cancel active jobs','Update route_code','Recalculate price','Cancel stale tokens','Issue new tokens','Notify pickup rider','Notify sender','Notify receiver','Publish ROUTE_SWITCH_EXECUTED'];
+      logReq('DB','',`→ Step ${i}/9: ${steps[i-1]}`,'');
+    }
+    setResp('mg-route',{success:true,new_route:newRoute,steps_completed:9,parcel:S.bookingRef});
+    logG('manager',`Route switch → ${newRoute} (9 atomic steps ✓)`,true);
+  }
+  setBtnLoad('mg-route',false);
+}
+
+async function mgSuspend(){
+  setBtnLoad('mg-susp',true);
+  const status = document.getElementById('mg-st')?.value;
+  const reason = document.getElementById('mg-sr')?.value;
+  await delay(600);
+  logReq('HTTP','PATCH',`/riders/${S.riderId}/status`,200,'');
+  logReq('DB','','→ UPDATE riders SET status='+status,'');
+  if(status==='SUSPENDED'){
+    logReq('DB','','→ UPDATE rider_jobs SET status=CANCELLED WHERE status IN (ASSIGNED,EN_ROUTE)','');
+    logReq('EV','','→ RIDER_SUSPENDED published','');
+  }
+  setResp('mg-susp',{success:true,data:{rider:S.riderName,status,reason}});
+  logG('manager',`${S.riderName} → ${status}`);
+  setBtnLoad('mg-susp',false);
+}
+
+// ════════════════════════════════════════════════════════
+// ── OPS HANDLERS
+// ════════════════════════════════════════════════════════
+async function opCandidates(){
+  setBtnLoad('op-cands',true); await delay(700);
+  logReq('HTTP','GET',`/riders/available?office_id=office-dsm-kariakoo&job_type=${document.getElementById('op-jt')?.value||'PICKUP'}`,200,'');
+  logReq('DB','','→ REDIS GEORADIUS geo:riders:office-001 5km ASC','');
+  logReq('DB','','→ JOIN capacity_check: COALESCE(confirmed_weight, declared*1.2)','');
+  setResp('op-cands',{candidates:[
+    {rider_id:'rider-001',name:'John Mwamba',distance_km:0.8,on_time_rate:0.94,available_weight_kg:12.5,score:0.91},
+    {rider_id:'rider-002',name:'Sarah Kimani',distance_km:1.2,on_time_rate:0.87,available_weight_kg:8.0,score:0.78},
+    {rider_id:'rider-003',name:'Ahmed Hassan',distance_km:1.8,on_time_rate:0.96,available_weight_kg:15.0,score:0.74},
+  ]});
+  setBtnLoad('op-cands',false);
+}
+
+async function opAssign(){
+  if(!S.parcelId){setResp('op-assign','Book a parcel first',true);return;}
+  setBtnLoad('op-assign',true); await delay(1000);
+  logReq('HTTP','POST','/riders/jobs/assign',201,'{"rider_id":"rider-001","job_type":"PICKUP"}');
+  logReq('DB','','→ REDIS SET assign_lock:'+S.parcelId.slice(0,8)+' = 1 (30s TTL)','');
+  logReq('DB','','→ checkCapacity: '+S.declaredWeight+'kg < 15kg max ✓','');
+  logReq('DB','','→ INSERT rider_jobs (parcel_id='+S.parcelId.slice(0,10)+'…, status=ASSIGNED)','');
+  logReq('DB','','→ UPDATE riders SET availability=ON_JOB','');
+  logReq('DB','','→ REDIS DEL assign_lock:'+S.parcelId.slice(0,8),'');
+  logReq('EV','','→ RIDER_JOB_ASSIGNED published to rider.jobs','');
+  S.riderAssigned=true; S.jobId='job-'+Date.now().toString(36);
+  setResp('op-assign',{success:true,data:{job_id:S.jobId,rider:'John Mwamba',parcel:S.bookingRef,score:0.91,lock_released:true}});
+  setStatus('RIDER ASSIGNED','transit');
+  logG('ops',`ML assigned John Mwamba (score 0.91) → ${S.bookingRef}`,true);
+  advance();
+  setBtnLoad('op-assign',false);
+}
+
+async function opLastMile(){
+  setBtnLoad('op-lastmile',true); await delay(900);
+  logReq('HTTP','POST','/riders/jobs/assign',201,'{"job_type":"LAST_MILE_DELIVERY"}');
+  logReq('DB','','→ UPDATE tokens: L4 CONSUMED → L5 CONSUMED (instant)','');
+  logReq('DB','','→ INSERT tokens (L6, TTL=15min, anti_replay=true)','');
+  logReq('DB','','→ UPDATE parcels SET status=LAST_MILE_RIDER_DISPATCHED','');
+  logReq('EV','','→ LAST_MILE_RIDER_DISPATCHED published → ROUTE LOCKED','');
+  S.tokens.L4='consumed'; S.tokens.L5='consumed'; S.tokens.L6='current';
+  S.lastMileSet=true;
+  setResp('op-lastmile',{success:true,data:{job_id:'job-lm-001',rider:'Mary Rider',deliver_to:S.receiverName,address:S.receiverAddress,l6_token:'L6-'+S.parcelId.slice(0,8).toUpperCase(),ttl:'15min',anti_replay:true}});
+  setStatus('LAST MILE','transit');
+  updateTop(); refreshTokens();
+  refreshCurrentPanel(); // activate L6 in rider panel
+  logG('ops',`Last mile assigned → L6 LIVE (15min anti-replay) for ${S.receiverName}`,true);
+  advance();
+  setBtnLoad('op-lastmile',false);
+}
+
+async function opNetwork(){
+  setBtnLoad('op-net',true); await delay(500);
+  logReq('HTTP','GET','/tracking/live-network',200,'');
+  logReq('WS','','→ Subscribe ops:network:overview','');
+  setResp('op-net',{riders_live:6,boxes_in_transit:3,offices_active:3,parcel:S.bookingRef,current_status:document.getElementById('td-status').textContent});
+  setBtnLoad('op-net',false);
+}
+
+async function opAlerts(){
+  setBtnLoad('op-alerts',true); await delay(500);
+  logReq('HTTP','GET','/ml/alerts?min_level=3',200,'');
+  const alerts = S.fraudFlagged ? [{level:4,type:'WEIGHT_FRAUD',parcel:S.bookingRef,message:'Weight mismatch >20%'}] : [];
+  setResp('op-alerts',{alerts,total:alerts.length});
+  setBtnLoad('op-alerts',false);
+}
+
+// ════════════════════════════════════════════════════════
+// ── RECEIVER HANDLERS
+// ════════════════════════════════════════════════════════
+async function rvTrack(){
+  setBtnLoad('rv-track',true); await delay(500);
+  const ref = document.getElementById('rv-ref')?.value||S.bookingRef;
+  logReq('HTTP','GET',`/parcels/track/${ref}`,200,'(public — no auth)');
+  logReq('DB','','→ REDIS GET parcel:'+S.parcelId?.slice(0,10)+'…:projection','');
+  const statusTxt = document.getElementById('td-status').textContent;
+  setResp('rv-track',{booking_reference:ref,status:S.delivered?'DELIVERED':statusTxt,sender:S.senderName,category:S.category,declared_weight_kg:S.declaredWeight,confirmed_weight_kg:S.confirmedWeight||null,estimated_delivery:S.dispatched?'Today 14:00–16:00':'Pending dispatch',last_event:'Status: '+statusTxt,destination:S.receiverAddress});
+  setBtnLoad('rv-track',false);
+}
+
+async function rvSign(){
+  if(S.tokens.L6!=='current'){logG('receiver','L6 not active — dispatch not done yet');return;}
+  logReq('HTTP','POST','/tokens/scan',200,`{"token_id":"L6-${S.parcelId.slice(0,8).toUpperCase()}","signed_by":"${S.receiverName}"}`);
+  logReq('DB','','→ BEGIN TRANSACTION','');
+  logReq('DB','','→ SELECT tokens WHERE token_id=L6-… AND used=false AND expires_at>NOW() FOR UPDATE','');
+  logReq('DB','','→ anti-replay: check used=false ✓','');
+  logReq('DB','','→ UPDATE tokens SET status=CONSUMED (L6)','');
+  logReq('DB','','→ UPDATE parcels SET status=DELIVERED, delivered_at=NOW()','');
+  logReq('DB','','→ UPDATE rider_jobs SET status=COMPLETED, earned_at=NOW()','');
+  logReq('DB','','→ updateEarningsSummary(rider_id, amount)','');
+  logReq('DB','','→ updatePerformanceMetrics(rider_id, on_time=true)','');
+  logReq('DB','','→ COMMIT','');
+  logReq('EV','','→ PARCEL_DELIVERY_CONFIRMED published','');
+  logReq('EV','','→ PAYMENT_COMMISSION_CALCULATE published','');
+  logReq('WS','','→ Redis PUBLISH parcel:'+S.parcelId.slice(0,8)+' {status:DELIVERED}','');
+  S.tokens.L6='consumed'; S.delivered=true;
+  setStatus('DELIVERED','delivered');
+  updateTop(); refreshTokens();
+  refreshCurrentPanel();
+  logG('receiver',`Parcel ${S.bookingRef} received by ${S.receiverName} ✓`,true);
+  S.journeyStep=STEPS.length; renderProgress();
+  renderSidebar();
+}
+
+async function rvOTP(){
+  setBtnLoad('rv-otp',true); await delay(700);
+  logReq('HTTP','POST',`/parcels/${S.parcelId?.slice(0,12)||'N/A'}/confirm-delivery-otp`,200,'');
+  logReq('DB','','→ UPDATE parcels SET status=DELIVERED','');
+  logReq('EV','','→ PARCEL_DELIVERY_CONFIRMED published','');
+  setResp('rv-otp',{success:true,data:{confirmed:true,method:'OTP',parcel:S.bookingRef,received_by:S.receiverName}});
+  setStatus('DELIVERED','delivered'); S.delivered=true;
+  logG('receiver',`Confirmed via OTP — ${S.bookingRef} delivered`);
+  setBtnLoad('rv-otp',false);
+}
+
+async function rvReturn(){
+  setBtnLoad('rv-return',true); await delay(700);
+  const reason=document.getElementById('rv-rsn')?.value;
+  logReq('HTTP','POST',`/parcels/${S.parcelId?.slice(0,12)||'N/A'}/return`,201,`{"reason":"${reason}"}`);
+  logReq('DB','','→ UPDATE parcels SET status=RETURN_INITIATED','');
+  logReq('EV','','→ PARCEL_RETURN_INITIATED published','');
+  setResp('rv-return',{success:true,data:{return_reference:'RET-'+S.bookingRef,reason,estimated_refund_days:3}});
+  logG('receiver',`Return initiated: ${reason}`);
+  setBtnLoad('rv-return',false);
+}
+
+// ════════════════════════════════════════════════════════
+// FRAUD INJECT
+// ════════════════════════════════════════════════════════
+function injectFraud(){
+  S.fraudFlagged=true;
+  logReq('DB','','→ FRAUD INJECT: confirmed_weight=8.5kg vs declared='+S.declaredWeight+'kg (340% over)','');
+  logReq('EV','','→ PARCEL_FRAUD_FLAGGED published','');
+  logReq('EV','','→ ML_ALERT_LEVEL_4 raised — OPS notified','');
+  logReq('WS','','→ Redis PUBLISH ml:alerts:4 {type:"WEIGHT_FRAUD",parcel:"'+S.bookingRef+'"}','');
+  setStatus('FRAUD FLAGGED','blocked');
+  logG('ops','🚨 FRAUD INJECTED: weight mismatch 340% on '+S.bookingRef+' — L4 alert active',true);
+}
+
+// ════════════════════════════════════════════════════════
+// RESET
+// ════════════════════════════════════════════════════════
+function resetAll(){
+  Object.assign(S,{
+    parcelId:null,bookingRef:null,routeCode:'A1',senderName:'Amina Hassan',
+    senderPhone:'+255712345678',receiverName:'Robert Mensah',receiverPhone:'+255787654321',
+    category:'ELECTRONICS',declaredWeight:2.5,declaredValue:150000,fragile:false,insurance:false,
+    pickupAddress:'Msimbazi St, Kariakoo, Dar es Salaam',receiverAddress:'Mapinduzi Rd, Mwanza',
+    confirmedWeight:null,variancePct:null,boxSerial:null,riderAssigned:false,jobId:null,
+    priceTZS:0,paymentId:null,riderName:'John Mwamba',riderId:'rider-001',
+    tokens:{L1:'pending',L2:'pending',L3:'pending',L4:'pending',L5:'pending',L6:'pending'},
+    journeyStep:0,paid:false,riderAtSender:false,officeReceived:false,measured:false,
+    packed:false,dispatched:false,lastMileSet:false,delivered:false,fraudFlagged:false,
+    activeActor:'sender'
+  });
+  document.getElementById('req-log').innerHTML='';
+  document.getElementById('glog').innerHTML='';
+  setStatus('AWAITING BOOKING','pending');
+  updateTop();
+  renderProgress();
+  renderSidebar();
+  renderPanel('sender');
+  logReq('SYS','','→ Demo reset — fresh state','');
+  logG('ops','↺ Reset — ready for new booking journey');
+}
+
+// ════════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════════
+renderSidebar();
+renderPanel('sender');
+renderProgress();
+updateTop();
+logReq('SYS','','FlexSend API Simulator — sandbox.flexsend.co.tz','');
+logReq('SYS','','All 7 actor tabs share the same parcel state','');
+logG('ops','Ready — start by booking as Sender, then follow each actor in order');
+logG('ops','💡 Tip: every tab auto-fills with data from the booking you create');
+</script>
+</body>
+</html>
