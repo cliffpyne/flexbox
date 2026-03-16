@@ -7,8 +7,8 @@ import 'dotenv/config';
 
 // ← REPLACE AT_API_KEY AND AT_USERNAME IN .env
 const AT = AfricasTalking({
-  apiKey:   process.env.AT_API_KEY   || 'REPLACE_AT_API_KEY',
-  username: process.env.AT_USERNAME  || 'REPLACE_AT_USERNAME',
+  apiKey:   process.env.AT_API_KEY  || '',
+  username: process.env.AT_USERNAME || '',
 });
 
 function generateOTP(): string {
@@ -42,14 +42,14 @@ export async function sendOTP(phone: string): Promise<void> {
 
   // Send SMS or log to console in development
   if (process.env.NODE_ENV === 'development') {
-    console.log(`OTP for ${phone}: ${otp}`); // ← OTP logged here in dev
-  } else {
-    await AT.SMS.send({
-      to:      [phone],
-      message: `Your FlexSend code is: ${otp}. Valid for 10 minutes.`,
-      from:    'FlexSend',
-    });
-  }
+  console.log(`OTP for ${phone}: ${otp}`);
+} else {
+  await AT.SMS.send({
+    to:      [phone],
+    message: `Your FlexSend code is: ${otp}. Valid for 10 minutes.`,
+    from:    process.env.AT_SENDER_ID || 'FlexSend',
+  });
+}
 }
 
 export async function verifyOTP(
