@@ -17,8 +17,41 @@ function generateOTP(): string {
   ).join('');
 }
 
+// export async function sendOTP(phone: string): Promise<void> {
+//   // Rate limit — max 3 OTPs per phone per hour
+//   const rateLimitKey = `otp_rate:${phone}`;
+//   const attempts = await redis.incr(rateLimitKey);
+//   if (attempts === 1) await redis.expire(rateLimitKey, 3600);
+//   if (attempts > OTP.RATE_LIMIT) {
+//     throw new Error('Too many OTP requests. Try again in an hour.');
+//   }
+
+//   const otp = generateOTP();
+//   const hash = await bcrypt.hash(otp, 10);
+//   const redisKey = `otp:${phone}`;
+
+//   // Store in Redis — fast validation
+//   await redis.setEx(redisKey, OTP.EXPIRY_SECS, hash);
+
+//   // Store in PostgreSQL — audit trail only
+//   await db.query(
+//     `INSERT INTO otp_requests (phone, otp_hash, expires_at)
+//      VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
+//     [phone, hash]
+//   );
+
+//   // Send SMS or log to console in development
+//   if (process.env.NODE_ENV === 'development') {
+//   console.log(`OTP for ${phone}: ${otp}`);
+// } else {
+//   await AT.SMS.send({
+//     to:      [phone],
+//     message: `Your FlexSend code is: ${otp}. Valid for 10 minutes.`,
+//     from:    process.env.AT_SENDER_ID || 'FlexSend',
+//   });
+// }
+// }
 export async function sendOTP(phone: string): Promise<void> {
-  // Rate limit — max 3 OTPs per phone per hour
   const rateLimitKey = `otp_rate:${phone}`;
   const attempts = await redis.incr(rateLimitKey);
   if (attempts === 1) await redis.expire(rateLimitKey, 3600);
@@ -26,30 +59,30 @@ export async function sendOTP(phone: string): Promise<void> {
     throw new Error('Too many OTP requests. Try again in an hour.');
   }
 
-  const otp = generateOTP();
+  const otp  = generateOTP();
   const hash = await bcrypt.hash(otp, 10);
-  const redisKey = `otp:${phone}`;
 
-  // Store in Redis — fast validation
-  await redis.setEx(redisKey, OTP.EXPIRY_SECS, hash);
+  // Store in Redis only — no DB write needed
+  await redis.setEx(`otp:${phone}`, OTP.EXPIRY_SECS, hash);
 
-  // Store in PostgreSQL — audit trail only
-  await db.query(
-    `INSERT INTO otp_requests (phone, otp_hash, expires_at)
-     VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
-    [phone, hash]
-  );
-
-  // Send SMS or log to console in development
   if (process.env.NODE_ENV === 'development') {
-  console.log(`OTP for ${phone}: ${otp}`);
-} else {
-  await AT.SMS.send({
-    to:      [phone],
-    message: `Your FlexSend code is: ${otp}. Valid for 10 minutes.`,
-    from:    process.env.AT_SENDER_ID || 'FlexSend',
-  });
-}
+    console.log(`OTP for ${phone}: ${otp}`);
+    return;
+  }
+
+  console.log(`Sending SMS via AT. Username: ${process.env.AT_USERNAME}, Key starts: ${process.env.AT_API_KEY?.slice(0,10)}`);
+
+  try {
+    const response = await AT.SMS.send({
+      to:      [phone],
+      message: `Your FlexSend code is: ${otp}. Valid for 10 minutes.`,
+      from:    process.env.AT_SENDER_ID || 'FlexSend',
+    });
+    console.log('AT Success:', JSON.stringify(response));
+  } catch (err: any) {
+    console.error('AT Failed:', err.message);
+    throw new Error(err.message);
+  }
 }
 
 export async function verifyOTP(
