@@ -13,6 +13,7 @@ import tokenRoutes        from './routes/token';
 import usernameRoutes     from './routes/username';
 
 const app = express();
+app.set('trust proxy', 1); 
 
 // ─── Security middleware ──────────────────────────────────────────────────
 app.use(helmet());
