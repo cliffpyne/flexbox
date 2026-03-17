@@ -6,7 +6,7 @@ import { UserRole }         from '@flexbox/types';
 
 // ─── Load RS256 keypair ────────────────────────────────────────────────────
 // Private key: used ONLY in auth-service to SIGN tokens
-// Public key:  shared with API Gateway and all services to VERIFY tokens
+// Public key:  shared with API x and all services to VERIFY tokens
 // NEVER share the private key outside this service
 
 const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || fs.readFileSync(
@@ -16,6 +16,9 @@ const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || fs.readFileSync(
 const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || fs.readFileSync(
   path.join(__dirname, 'keys/public.pem'), 'utf8'
 )).replace(/\\n/g, '\n');
+
+
+
 
 // ─── Token payloads ────────────────────────────────────────────────────────
 export interface TokenPayload {
