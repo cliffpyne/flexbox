@@ -9,13 +9,13 @@ import { UserRole }         from '@flexbox/types';
 // Public key:  shared with API Gateway and all services to VERIFY tokens
 // NEVER share the private key outside this service
 
-const PRIVATE_KEY = process.env.TOKEN_PRIVATE_KEY || fs.readFileSync(
+const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || fs.readFileSync(
   path.join(__dirname, 'keys/private.pem'), 'utf8'
-);
+)).replace(/\\n/g, '\n');
 
-const PUBLIC_KEY = process.env.TOKEN_PUBLIC_KEY || fs.readFileSync(
+const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || fs.readFileSync(
   path.join(__dirname, 'keys/public.pem'), 'utf8'
-);
+)).replace(/\\n/g, '\n');
 
 // ─── Token payloads ────────────────────────────────────────────────────────
 export interface TokenPayload {

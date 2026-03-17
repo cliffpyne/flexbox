@@ -2573,6 +2573,8 @@ __metadata:
 "@flexbox/utils@workspace:*, @flexbox/utils@workspace:packages/utils":
   version: 0.0.0-use.local
   resolution: "@flexbox/utils@workspace:packages/utils"
+  dependencies:
+    typescript: "npm:^5.4.5"
   languageName: unknown
   linkType: soft
 
