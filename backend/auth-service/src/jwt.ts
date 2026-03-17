@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-import fs   from 'fs';
-import path from 'path';
+
 import { ROLE_PERMISSIONS } from '@flexbox/constants';
 import { UserRole }         from '@flexbox/types';
 
@@ -9,13 +8,9 @@ import { UserRole }         from '@flexbox/types';
 // Public key:  shared with API x and all services to VERIFY tokens
 // NEVER share the private key outside this service
 
-const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || '')
-  .replace(/\\n/g, '\n')
-  .trim();
+const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || '').trim();
 
-const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || '')
-  .replace(/\\n/g, '\n')
-  .trim();
+const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || '').trim();
 
 console.log('KEY_LENGTH:', PRIVATE_KEY.length);
 console.log('KEY_START:', PRIVATE_KEY.substring(0, 30));
