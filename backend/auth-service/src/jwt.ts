@@ -2,15 +2,28 @@ import jwt from 'jsonwebtoken';
 
 import { ROLE_PERMISSIONS } from '@flexbox/constants';
 import { UserRole }         from '@flexbox/types';
+import crypto from 'crypto';
+
+
 
 // ─── Load RS256 keypair ────────────────────────────────────────────────────
 // Private key: used ONLY in auth-service to SIGN tokens
 // Public key:  shared with API x and all services to VERIFY tokens
 // NEVER share the private key outside this service
 
-const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || '').trim();
+const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || '')
+  .replace(/\\n/g, '\n')
+  .trim();
 
-const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || '').trim();
+const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || '')
+  .replace(/\\n/g, '\n')
+  .trim();
+try {
+  crypto.createPrivateKey(PRIVATE_KEY);
+  console.log("✅ Private key is valid");
+} catch (err) {
+  console.error("❌ Invalid private key:", err.message);
+}
 
 console.log('KEY_CHARS:', JSON.stringify(PRIVATE_KEY.substring(0, 50)));
 
