@@ -6,9 +6,8 @@ import { UserRole, Permission } from '@flexbox/types';
 
 // RS256 public key — only used to VERIFY tokens
 // Private key never leaves auth-service
-const PUBLIC_KEY =
-  process.env.TOKEN_PUBLIC_KEY ||
-  fs.readFileSync(path.join(__dirname, 'keys/public.pem'), 'utf8');
+const PUBLIC_KEY = process.env.TOKEN_PUBLIC_KEY || '';
+if (!PUBLIC_KEY) throw new Error('TOKEN_PUBLIC_KEY env variable is required');
 
 // ─── Validate JWT on every protected route ─────────────────────────────────
 export function authenticate(req: any, res: Response, next: NextFunction) {
