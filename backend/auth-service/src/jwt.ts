@@ -11,13 +11,16 @@ import crypto from 'crypto';
 // Public key:  shared with API x and all services to VERIFY tokens
 // NEVER share the private key outside this service
 
-const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || '')
-  .replace(/\\n/g, '\n')
+const PRIVATE_KEY = Buffer
+  .from(process.env.TOKEN_PRIVATE_KEY_BASE64 || '', 'base64')
+  .toString('utf-8')
   .trim();
 
-const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || '')
-  .replace(/\\n/g, '\n')
+const PUBLIC_KEY = Buffer
+  .from(process.env.TOKEN_PUBLIC_KEY_BASE64 || '', 'base64')
+  .toString('utf-8')
   .trim();
+//clifford
 try {
   crypto.createPrivateKey(PRIVATE_KEY);
   console.log("✅ Private key is valid");
