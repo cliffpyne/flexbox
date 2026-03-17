@@ -12,6 +12,8 @@ const PRIVATE_KEY = (process.env.TOKEN_PRIVATE_KEY || '').trim();
 
 const PUBLIC_KEY = (process.env.TOKEN_PUBLIC_KEY || '').trim();
 
+console.log('KEY_CHARS:', JSON.stringify(PRIVATE_KEY.substring(0, 50)));
+
 console.log('KEY_LENGTH:', PRIVATE_KEY.length);
 console.log('KEY_START:', PRIVATE_KEY.substring(0, 30));
 console.log('HAS_NEWLINES:', PRIVATE_KEY.includes('\n'));
@@ -30,7 +32,7 @@ export interface RefreshPayload {
   user_id:      string;
   token_family: string; // for rotation — detects refresh token reuse
 }
-
+console.log('Signing with key type:', typeof PRIVATE_KEY, 'length:', PRIVATE_KEY.length, 'first char code:', PRIVATE_KEY.charCodeAt(0));
 // ─── Generate access + refresh token pair ─────────────────────────────────
 export function generateTokens(user: {
   user_id:   string;
