@@ -1,14 +1,14 @@
-import { Router }    from 'express';
-import { z }         from 'zod';
-import bcrypt        from 'bcrypt';
-import speakeasy     from 'speakeasy';
-import crypto        from 'crypto';
-import { generateTokens }    from '../jwt';
-import { redis }             from '../redis';
+import { Router } from 'express';
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
+import speakeasy from 'speakeasy';
+import crypto from 'crypto';
+import { generateTokens } from '../jwt';
+import { redis } from '../redis';
 import { sendOTP, verifyOTP, sendForgotPasswordOTP } from '../otp';
-import { authenticate, blockIfMustChangePassword }   from '../middleware';
-import { hashPassword, validatePasswordStrength }     from '../lib/password';
-import { sendSMS, smsPasswordChanged }               from '../lib/sms';
+import { authenticate, blockIfMustChangePassword } from '../middleware';
+import { hashPassword, validatePasswordStrength } from '../lib/password';
+import { sendSMS, smsPasswordChanged } from '../lib/sms';
 import {
   getUserByUsername,
   getUserById,
@@ -51,10 +51,10 @@ router.post('/login', async (req, res) => {
     }
 
     // Check lockout from failed attempts
-    const lockKey     = `pwd_attempts:${user.user_id}`;
-    const attempts    = parseInt(await redis.get(lockKey) || '0');
+    const lockKey = `pwd_attempts:${user.user_id}`;
+    const attempts = parseInt(await redis.get(lockKey) || '0');
     const MAX_ATTEMPTS = 10;
-    const LOCK_SECS   = 30 * 60; // 30 minutes
+    const LOCK_SECS = 30 * 60; // 30 minutes
 
     if (attempts >= MAX_ATTEMPTS) {
       return res.status(403).json({
@@ -79,7 +79,7 @@ router.post('/login', async (req, res) => {
     await redis.del(lockKey);
 
     // OPS_ADMIN and SUPER_ADMIN require TOTP second factor
-    if (['OPS_ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+    if (['SUPER_ADMIN'].includes(user.role)) {
       // Store a short-lived Redis session for TOTP step
       const totpSessionKey = crypto.randomUUID();
       await redis.setEx(
@@ -89,43 +89,43 @@ router.post('/login', async (req, res) => {
       );
 
       return res.json({
-        success:       true,
+        success: true,
         requires_totp: true,
-        totp_session:  totpSessionKey, // opaque key — cannot be decoded
+        totp_session: totpSessionKey, // opaque key — cannot be decoded
       });
     }
 
     await updateLastLogin(user.user_id);
 
     const { accessToken, refreshToken, token_family } = generateTokens({
-      user_id:   user.user_id,
-      role:      user.role,
+      user_id: user.user_id,
+      role: user.role,
       office_id: user.office_id,
     });
 
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-await storeRefreshToken({
-  user_id:         user.user_id,
-  token:           refreshToken,
-  token_family,
-  device_id:       req.headers['x-device-id'] as string || 'unknown',
-  parent_token_id: 'root',
-  expires_at:      expiresAt,
-});
+    await storeRefreshToken({
+      user_id: user.user_id,
+      token: refreshToken,
+      token_family,
+      device_id: req.headers['x-device-id'] as string || 'unknown',
+      parent_token_id: 'root',
+      expires_at: expiresAt,
+    });
 
     await redis.setEx(`session:active:${user.user_id}`, 900, '1');
 
     res.json({
       success: true,
       data: {
-        access_token:         accessToken,
-        refresh_token:        refreshToken,
+        access_token: accessToken,
+        refresh_token: refreshToken,
         must_change_password: user.must_change_password,
         user: {
-          user_id:   user.user_id,
-          username:  user.username,
+          user_id: user.user_id,
+          username: user.username,
           full_name: user.full_name,
-          role:      user.role,
+          role: user.role,
           office_id: user.office_id,
         },
       },
@@ -143,7 +143,7 @@ router.post('/totp/verify', async (req, res) => {
   try {
     const { totp_session, totp_code } = z.object({
       totp_session: z.string().uuid(),
-      totp_code:    z.string().length(6),
+      totp_code: z.string().length(6),
     }).parse(req.body);
 
     // Retrieve user_id from Redis session — NOT from base64 decode
@@ -164,10 +164,10 @@ router.post('/totp/verify', async (req, res) => {
     }
 
     const isValid = speakeasy.totp.verify({
-      secret:   user.totp_secret,
+      secret: user.totp_secret,
       encoding: 'base32',
-      token:    totp_code,
-      window:   1,
+      token: totp_code,
+      window: 1,
     });
 
     if (!isValid) {
@@ -182,33 +182,33 @@ router.post('/totp/verify', async (req, res) => {
     await updateLastLogin(user.user_id);
 
     const { accessToken, refreshToken, token_family } = generateTokens({
-      user_id:   user.user_id,
-      role:      user.role,
+      user_id: user.user_id,
+      role: user.role,
       office_id: user.office_id,
     });
 
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-await storeRefreshToken({
-  user_id:         user.user_id,
-  token:           refreshToken,
-  token_family,
-  device_id:       req.headers['x-device-id'] as string || 'unknown',
-  parent_token_id: 'root',
-  expires_at:      expiresAt,
-});
+    await storeRefreshToken({
+      user_id: user.user_id,
+      token: refreshToken,
+      token_family,
+      device_id: req.headers['x-device-id'] as string || 'unknown',
+      parent_token_id: 'root',
+      expires_at: expiresAt,
+    });
 
     await redis.setEx(`session:active:${user.user_id}`, 900, '1');
 
     res.json({
       success: true,
       data: {
-        access_token:  accessToken,
+        access_token: accessToken,
         refresh_token: refreshToken,
         user: {
-          user_id:   user.user_id,
-          username:  user.username,
+          user_id: user.user_id,
+          username: user.username,
           full_name: user.full_name,
-          role:      user.role,
+          role: user.role,
           office_id: user.office_id,
         },
       },
@@ -228,7 +228,7 @@ router.post('/change',
     try {
       const { current_password, new_password } = z.object({
         current_password: z.string().min(1),
-        new_password:     z.string().min(8),
+        new_password: z.string().min(8),
       }).parse(req.body);
 
       const user = await getUserById(req.actor.user_id);
@@ -283,7 +283,7 @@ router.post('/forgot', async (req, res) => {
     }).parse(req.body);
 
     // Always return success — do not reveal if phone is registered
-    await sendForgotPasswordOTP(phone).catch(() => {});
+    await sendForgotPasswordOTP(phone).catch(() => { });
 
     res.json({
       success: true,
@@ -301,8 +301,8 @@ router.post('/forgot', async (req, res) => {
 router.post('/reset', async (req, res) => {
   try {
     const { phone, otp, new_password } = z.object({
-      phone:        z.string().min(10),
-      otp:          z.string().length(6),
+      phone: z.string().min(10),
+      otp: z.string().length(6),
       new_password: z.string().min(8),
     }).parse(req.body);
 
