@@ -13,8 +13,8 @@ const router = Router();
 // ================================================================
 router.get('/serving', authenticate, async (req: any, res) => {
   try {
-    const lat  = parseFloat(req.query.lat as string);
-    const lng  = parseFloat(req.query.lng as string);
+    const lat = parseFloat(req.query.lat as string);
+    const lng = parseFloat(req.query.lng as string);
     const type = (req.query.type as string) || 'PICKUP';
 
     if (isNaN(lat) || isNaN(lng)) {
@@ -38,9 +38,9 @@ router.get('/serving', authenticate, async (req: any, res) => {
          AND z.zone_type = $1
          AND z.is_active = true
          AND ST_Within(
-           ST_SetSRID(ST_MakePoint($2, $3), 4326),
-           z.polygon
-         )
+  ST_SetSRID(ST_MakePoint($2, $3), 4326),
+  z.polygon::geometry
+)
        ORDER BY
          CASE o.office_type WHEN 'HUB' THEN 1 WHEN 'BRANCH' THEN 2 ELSE 3 END
        LIMIT 1`,
@@ -63,9 +63,9 @@ router.get('/serving', authenticate, async (req: any, res) => {
       );
 
       const result = {
-        covered:    false,
-        office_id:  null,
-        message:    'No FlexSend coverage at this location yet',
+        covered: false,
+        office_id: null,
+        message: 'No FlexSend coverage at this location yet',
         nearest_office: nearest || null,
       };
 
@@ -75,8 +75,8 @@ router.get('/serving', authenticate, async (req: any, res) => {
     }
 
     const result = {
-      covered:     true,
-      office_id:   office.office_id,
+      covered: true,
+      office_id: office.office_id,
       office_code: office.office_code,
       office_name: office.name,
       capabilities: office.capabilities,
@@ -132,8 +132,8 @@ router.get('/nearest', authenticate, async (req: any, res) => {
 // ================================================================
 router.get('/:id/coverage-check', authenticate, async (req: any, res) => {
   try {
-    const lat  = parseFloat(req.query.lat as string);
-    const lng  = parseFloat(req.query.lng as string);
+    const lat = parseFloat(req.query.lat as string);
+    const lng = parseFloat(req.query.lng as string);
     const type = (req.query.type as string) || 'PICKUP';
 
     const { rows: [zone] } = await db.query(
@@ -194,30 +194,30 @@ router.get('/:id/booking-options', authenticate, async (req: any, res) => {
 
     if (capabilities.has_pickup_riders) {
       origin_options.push({
-        code:           'A1',
-        label:          'Pickup from my address',
-        available:      true,
-        fee:            2000,
+        code: 'A1',
+        label: 'Pickup from my address',
+        available: true,
+        fee: 2000,
         estimated_wait: `Within ${office.sla_config?.pickup_sla_hours || 2} hours`,
       });
     }
 
     if (capabilities.accepts_self_dropoff) {
       origin_options.push({
-        code:           'A2',
-        label:          'I will drop off at the office',
-        available:      true,
-        fee:            0,
+        code: 'A2',
+        label: 'I will drop off at the office',
+        available: true,
+        fee: 0,
         estimated_wait: 'Bring anytime during operating hours',
       });
     }
 
     if (capabilities.has_active_agents) {
       origin_options.push({
-        code:           'A3',
-        label:          'My agent will drop off',
-        available:      true,
-        fee:            0,
+        code: 'A3',
+        label: 'My agent will drop off',
+        available: true,
+        fee: 0,
         estimated_wait: 'Agent will drop off',
       });
     }
@@ -227,36 +227,36 @@ router.get('/:id/booking-options', authenticate, async (req: any, res) => {
 
     if (capabilities.has_last_mile_delivery_riders) {
       last_mile_options.push({
-        code:      'D1',
-        label:     'Deliver to receiver address',
+        code: 'D1',
+        label: 'Deliver to receiver address',
         available: true,
-        fee:       2500,
+        fee: 2500,
       });
     }
 
     // Self pickup should always be available
     last_mile_options.push({
-      code:      'D2',
-      label:     'Receiver picks up from office',
+      code: 'D2',
+      label: 'Receiver picks up from office',
       available: true,
-      fee:       0,
+      fee: 0,
     });
 
     // Special options
     const special_options = {
-      express_available:          capabilities.supports_express_same_day && universe === 'IN_REGION',
-      express_fee:                capabilities.supports_express_same_day ? 5000 : null,
+      express_available: capabilities.supports_express_same_day && universe === 'IN_REGION',
+      express_fee: capabilities.supports_express_same_day ? 5000 : null,
       special_protection_available: capabilities.has_special_protection_boxing,
-      special_protection_fee:     capabilities.has_special_protection_boxing ? 3500 : null,
-      direct_rider_available:     capabilities.supports_direct_single_rider && universe === 'IN_REGION',
-      intercity_available:        capabilities.has_intercity_dispatch && universe === 'UPCOUNTRY',
+      special_protection_fee: capabilities.has_special_protection_boxing ? 3500 : null,
+      direct_rider_available: capabilities.supports_direct_single_rider && universe === 'IN_REGION',
+      intercity_available: capabilities.has_intercity_dispatch && universe === 'UPCOUNTRY',
     };
 
     res.json({
       success: true,
       data: {
-        office_id:       req.params.id,
-        office_name:     office.name,
+        office_id: req.params.id,
+        office_name: office.name,
         universe,
         origin_options,
         last_mile_options,
