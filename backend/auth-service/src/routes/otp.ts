@@ -1,8 +1,8 @@
-import { Router }   from 'express';
-import { z }        from 'zod';
+import { Router } from 'express';
+import { z } from 'zod';
 import { sendOTP, verifyOTP } from '../otp';
-import { generateTokens }     from '../jwt';
-import { redis }              from '../redis';
+import { generateTokens } from '../jwt';
+import { redis } from '../redis';
 import {
   getUserByPhone,
   createCustomer,
@@ -41,7 +41,7 @@ router.post('/verify', async (req, res) => {
   try {
     const { phone, otp } = z.object({
       phone: z.string().min(10),
-      otp:   z.string().length(6),
+      otp: z.string().length(6),
     }).parse(req.body);
 
     const isValid = await verifyOTP(phone, otp, 'otp');
@@ -78,19 +78,21 @@ router.post('/verify', async (req, res) => {
     }
 
     // Issue tokens
-    const { accessToken, refreshToken, family } = generateTokens({
-      user_id:   user.user_id,
-      role:      user.role,
+    const { accessToken, refreshToken, token_family } = generateTokens({
+      user_id: user.user_id,
+      role: user.role,
       office_id: user.office_id,
     });
 
     // Store refresh token in DB
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     await storeRefreshToken({
-      user_id:      user.user_id,
-      token:        refreshToken,
-      token_family: family,
-      expires_at:   expiresAt,
+      user_id: user.user_id,
+      token: refreshToken,
+      token_family,
+      device_id: req.headers['x-device-id'] as string || 'unknown',
+      parent_token_id: 'root',
+      expires_at: expiresAt,
     });
 
     // Mark session active in Redis
@@ -99,13 +101,13 @@ router.post('/verify', async (req, res) => {
     res.json({
       success: true,
       data: {
-        access_token:  accessToken,
+        access_token: accessToken,
         refresh_token: refreshToken,
         user: {
-          user_id:  user.user_id,
-          phone:    user.phone,
+          user_id: user.user_id,
+          phone: user.phone,
           username: user.username,
-          role:     user.role,
+          role: user.role,
         },
       },
     });
