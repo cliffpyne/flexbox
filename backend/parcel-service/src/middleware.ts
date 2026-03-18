@@ -6,7 +6,13 @@ export function authenticate(req: any, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ success: false, message: 'AUTH_001: Missing token' });
   try {
-    req.actor = jwt.verify(token, process.env.JWT_SECRET || '');
+    // req.actor = jwt.verify(token, process.env.JWT_SECRET || '');
+    const PUBLIC_KEY = Buffer
+  .from(process.env.TOKEN_PUBLIC_KEY_BASE64 || '', 'base64')
+  .toString('utf-8')
+  .trim();
+
+req.actor = jwt.verify(token, PUBLIC_KEY, { algorithms: ['RS256'] });
     next();
   } catch {
     res.status(401).json({ success: false, message: 'AUTH_002: Token expired or invalid' });
@@ -25,7 +31,12 @@ export function requireRole(...roles: UserRole[]) {
 export function optionalAuth(req: any, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (token) {
-    try { req.actor = jwt.verify(token, process.env.JWT_SECRET || ''); } catch {}
+    try {const PUBLIC_KEY = Buffer
+  .from(process.env.TOKEN_PUBLIC_KEY_BASE64 || '', 'base64')
+  .toString('utf-8')
+  .trim();
+
+req.actor = jwt.verify(token, PUBLIC_KEY, { algorithms: ['RS256'] }); } catch {}
   }
   next();
 }
