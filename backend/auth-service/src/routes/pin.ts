@@ -68,19 +68,21 @@ router.post('/login', async (req, res) => {
     await redis.del(lockKey);
 
     // Issue tokens
-    const { accessToken, refreshToken, family } = generateTokens({
+    const { accessToken, refreshToken, token_family } = generateTokens({
       user_id:   user.user_id,
       role:      user.role,
       office_id: user.office_id,
     });
 
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    await storeRefreshToken({
-      user_id:      user.user_id,
-      token:        refreshToken,
-      token_family: family,
-      expires_at:   expiresAt,
-    });
+await storeRefreshToken({
+  user_id:         user.user_id,
+  token:           refreshToken,
+  token_family,
+  device_id:       req.headers['x-device-id'] as string || 'unknown',
+  parent_token_id: 'root',
+  expires_at:      expiresAt,
+});
 
     await redis.setEx(`session:active:${user.user_id}`, 900, '1');
 
