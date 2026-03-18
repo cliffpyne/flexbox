@@ -1,81 +1,68 @@
-import jwt from 'jsonwebtoken';
+import jwt          from 'jsonwebtoken';
+import crypto        from 'crypto';
 import { ROLE_PERMISSIONS } from '@flexbox/constants';
-import { UserRole } from '@flexbox/types';
-import crypto from 'crypto';
-
-// ─── Load RS256 keypair ────────────────────────────────────────────────────
-// Private key: used ONLY in auth-service to SIGN tokens
-// Public key:  shared with API and all services to VERIFY tokens
+import { UserRole }         from '@flexbox/types';
 
 const PRIVATE_KEY = Buffer
   .from(process.env.TOKEN_PRIVATE_KEY_BASE64 || '', 'base64')
   .toString('utf-8')
   .trim();
 
-const PUBLIC_KEY = Buffer
+export const PUBLIC_KEY = Buffer
   .from(process.env.TOKEN_PUBLIC_KEY_BASE64 || '', 'base64')
   .toString('utf-8')
   .trim();
 
-// Optional: minimal safety check (no noisy logs)
 if (!PRIVATE_KEY || !PUBLIC_KEY) {
-  throw new Error('JWT keys are not properly configured');
+  throw new Error('JWT keys are not configured.');
 }
 
-// ─── Token payloads ────────────────────────────────────────────────────────
 export interface TokenPayload {
-  user_id: string;
-  role: UserRole;
-  actor_type: UserRole;
-  office_id: string | null;
-  permissions: string[];
+  user_id:      string;
+  role:         UserRole;
+  actor_type:   UserRole;
+  office_id:    string | null;
+  permissions:  string[];
+  device_id:    string;
+  token_family: string;
 }
 
 export interface RefreshPayload {
-  user_id: string;
-  token_family: string; // for rotation — detects refresh token reuse
+  user_id:          string;
+  token_family:     string;
+  device_id:        string;
+  parent_token_id:  string;
 }
 
-// ─── Generate access + refresh token pair ─────────────────────────────────
 export function generateTokens(user: {
-  user_id: string;
-  role: UserRole;
-  office_id?: string | null;
+  user_id:           string;
+  role:              UserRole;
+  office_id?:        string | null;
+  device_id?:        string;
+  token_family?:     string;
+  parent_token_id?:  string;
 }) {
-  const permissions = ROLE_PERMISSIONS[user.role] || [];
+  const permissions     = ROLE_PERMISSIONS[user.role] || [];
+  const device_id       = user.device_id      || 'unknown';
+  const token_family    = user.token_family   || crypto.randomUUID();
+  const parent_token_id = user.parent_token_id || 'root';
 
-  const accessPayload: TokenPayload = {
-    user_id: user.user_id,
-    role: user.role,
-    actor_type: user.role,
-    office_id: user.office_id || null,
-    permissions,
-  };
-
-  // Access token: RS256, 15 minutes
-  const accessToken = jwt.sign(accessPayload, PRIVATE_KEY, {
-    algorithm: 'RS256',
-    expiresIn: '15m',
-  });
-
-  // Refresh token: RS256, 30 days
-  const family = crypto.randomUUID();
-
-  const refreshToken = jwt.sign(
-    { user_id: user.user_id, token_family: family } as RefreshPayload,
+  const accessToken = jwt.sign(
+    { user_id: user.user_id, role: user.role, actor_type: user.role,
+      office_id: user.office_id || null, permissions, device_id, token_family },
     PRIVATE_KEY,
-    {
-      algorithm: 'RS256',
-      expiresIn: '30d',
-    }
+    { algorithm: 'RS256', expiresIn: '15m' }
   );
 
-  return { accessToken, refreshToken, family };
+  const refreshToken = jwt.sign(
+    { user_id: user.user_id, token_family, device_id, parent_token_id },
+    PRIVATE_KEY,
+    { algorithm: 'RS256', expiresIn: '30d' }
+  );
+
+  return { accessToken, refreshToken, token_family, device_id };
 }
 
-// ─── Verify any token ─────────────────────────────────────────────────────
 export function verifyToken(token: string): any {
-  return jwt.verify(token, PUBLIC_KEY, {
-    algorithms: ['RS256'],
-  });
+  return jwt.verify(token, PUBLIC_KEY, { algorithms: ['RS256'] });
 }

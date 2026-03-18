@@ -4,7 +4,7 @@ import { redis }       from './redis';
 import { Permission, UserRole } from '@flexbox/types';
 
 // ─── Authenticate — validate JWT on every protected route ─────────────────
-export function authenticate(req: any, res: Response, next: NextFunction) {
+export async function authenticate(req: any, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) {
     return res.status(401).json({ success: false, message: 'AUTH_001: Missing token' });
@@ -13,15 +13,14 @@ export function authenticate(req: any, res: Response, next: NextFunction) {
   try {
     const payload = verifyToken(token);
 
-    // Fast session check — if admin logged out, Redis flag is "0"
-    // We do this async — do not await to avoid slowing every request
-    redis.get(`session:active:${payload.user_id}`).then(flag => {
-      if (flag === '0') {
-        // Session was revoked (logout). Let this request through
-        // but next request will be caught (access token expires in 15m)
-        // For full immediate revocation, you would await this and reject
-      }
-    });
+    const flag = await redis.get(`session:active:${payload.user_id}`);
+
+    if (flag === '0') {
+      return res.status(401).json({
+        success: false,
+        message: 'AUTH_003: Session revoked'
+      });
+    }
 
     req.actor = payload;
     next();
