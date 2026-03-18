@@ -11,6 +11,9 @@ import { SLA } from '@flexbox/constants';
 
 const router = Router();
 
+console.log('OFFICE_SERVICE_URL:', process.env.OFFICE_SERVICE_URL);
+console.log('ROUTING_SERVICE_URL:', process.env.ROUTING_SERVICE_URL);
+
 // ================================================================
 // POST /parcels — Create a booking
 // ================================================================
