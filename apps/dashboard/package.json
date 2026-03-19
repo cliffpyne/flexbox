@@ -98,5 +98,8 @@
   "overrides": {
     "minimatch": "^10.2.1",
     "ajv": ">=8.18.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
