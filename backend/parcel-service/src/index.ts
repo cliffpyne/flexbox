@@ -9,6 +9,7 @@ import parcelRoutes      from './routes/parcels';
 import eventRoutes       from './routes/events';
 import measurementRoutes from './routes/measurement';
 import returnRoutes      from './routes/returns';
+import assignmentRoutes from './routes/assignments';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -16,6 +17,9 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors({ origin: '*' }));
 app.use(express.json());
+
+app.use('/parcels/:id', assignmentRoutes);
+
 
 // Public tracking — rate limit by IP
 const trackingLimiter = rateLimit({
