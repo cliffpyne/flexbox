@@ -26,3 +26,4 @@ __pycache__/
 backend/ai-dispatch/.venv
 .pnp.cjs
 .pnp.loader.mjs
+apps/dashboard/node_modules
