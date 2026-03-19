@@ -26,8 +26,8 @@ app.use(express.json({ limit: '1mb' }));
 // ─── Rate limiting ────────────────────────────────────────────────────────
 // Tighter limit on auth endpoints — brute force protection
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max:      20,
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max:      100,
   message:  { success: false, message: 'Too many requests. Try again later.' },
   standardHeaders: true,
   legacyHeaders:   false,
