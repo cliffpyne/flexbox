@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
     const lockKey = `pwd_attempts:${user.user_id}`;
     const attempts = parseInt(await redis.get(lockKey) || '0');
     const MAX_ATTEMPTS = 10;
-    const LOCK_SECS = 30 * 60; // 30 minutes
+    const LOCK_SECS = 5 * 60; // 5 minutes // 30 minutes
 
     if (attempts >= MAX_ATTEMPTS) {
       return res.status(403).json({

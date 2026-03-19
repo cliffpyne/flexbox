@@ -115,6 +115,7 @@ router.post('/logout', authenticate, async (req: any, res) => {
     } else {
       // Fallback — logout all
       await revokeAllUserTokens(req.actor.user_id);
+    await redis.del(`pwd_attempts:${req.actor.user_id}`);
     }
 
     await redis.setEx(`session:active:${req.actor.user_id}`, 900, '0');
@@ -131,6 +132,7 @@ router.post('/logout', authenticate, async (req: any, res) => {
 router.post('/logout-all', authenticate, async (req: any, res) => {
   try {
     await revokeAllUserTokens(req.actor.user_id);
+    await redis.del(`pwd_attempts:${req.actor.user_id}`);
     await redis.setEx(`session:active:${req.actor.user_id}`, 900, '0');
     res.json({ success: true, message: 'Logged out from all devices.' });
   } catch (err: any) {
