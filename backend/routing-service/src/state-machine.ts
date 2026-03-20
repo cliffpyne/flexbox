@@ -72,19 +72,19 @@ export const FLOW_STATE_MACHINE: Record<string, NextEventRule> = {
   },
   'PARCEL_RIDER_ASSIGNED': {
     events: ['PARCEL_RIDER_DISPATCHED'],
-    actors: ['SYSTEM'],
+    actors: ['SYSTEM', UserRole.OPS_ADMIN, UserRole.SUPER_ADMIN, UserRole.OFFICE_MANAGER],
   },
   'PARCEL_RIDER_DISPATCHED': {
     events: ['PARCEL_RIDER_ARRIVED_AT_SENDER'],
-    actors: [UserRole.RIDER, 'SYSTEM'],
+    actors: [UserRole.RIDER, UserRole.OPS_ADMIN, UserRole.SUPER_ADMIN, 'SYSTEM'],
   },
   'PARCEL_RIDER_ARRIVED_AT_SENDER': {
     events: ['PARCEL_COLLECTED_BY_RIDER'],
-    actors: [UserRole.RIDER],
+    actors: [UserRole.RIDER, UserRole.OPS_ADMIN, UserRole.SUPER_ADMIN, 'SYSTEM'],
   },
   'PARCEL_COLLECTED_BY_RIDER': {
     events: ['PARCEL_OFFICE_RECEIVED'],
-    actors: [UserRole.OFFICE_WORKER, UserRole.OFFICE_MANAGER],
+    actors: [UserRole.OFFICE_WORKER, UserRole.OFFICE_MANAGER, UserRole.OPS_ADMIN, UserRole.SUPER_ADMIN, 'SYSTEM'],
   },
   'PARCEL_SENDER_SELF_DROPOFF': {
     events: ['PARCEL_OFFICE_RECEIVED'],
