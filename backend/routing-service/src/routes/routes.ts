@@ -208,6 +208,15 @@ router.post('/validate-event', async (req, res) => {
       return res.json({ valid: true });
     }
 
+    // Passthrough events — logged for audit but transparent to flow
+    const PASSTHROUGH_EVENTS = [
+      'OFFICER_ASSIGNED', 'RIDER_ASSIGNED', 'NOTE_ADDED',
+      'PHOTO_ADDED', 'DOCUMENT_UPLOADED',
+    ];
+    if (PASSTHROUGH_EVENTS.includes(body.last_event_type)) {
+      return res.json({ valid: true });
+    }
+
     const rule = FLOW_STATE_MACHINE[body.last_event_type];
 
     // No rule = terminal state

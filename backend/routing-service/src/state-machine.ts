@@ -225,3 +225,6 @@ export function getSwitchEligibility(
 
   return { eligible, allowed_changes, requires_approval };
 }
+// ── Passthrough admin events (do not block flow) ──────────────────────────────
+// These events are logged for audit but don't change the flow state
+// The validate-event endpoint should treat them as transparent
