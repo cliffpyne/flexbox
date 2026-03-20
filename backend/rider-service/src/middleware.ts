@@ -1,11 +1,16 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
+const PUBLIC_KEY = Buffer
+  .from(process.env.TOKEN_PUBLIC_KEY_BASE64 || '', 'base64')
+  .toString('utf-8')
+  .trim();
+
 export function authenticate(req: any, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ success: false, message: 'AUTH_001: Missing token' });
   try {
-    req.actor = jwt.verify(token, process.env.JWT_SECRET || '');
+    req.actor = jwt.verify(token, PUBLIC_KEY, { algorithms: ['RS256'] });
     next();
   } catch {
     res.status(401).json({ success: false, message: 'AUTH_002: Invalid token' });
@@ -23,13 +28,10 @@ export function requireRole(...roles: string[]) {
 }
 
 export function requireOwnOrManager(req: any, res: Response, next: NextFunction) {
-  const { actor } = req;
-  const { id } = req.params;
-  if (!actor) return res.status(401).json({ success: false, message: 'AUTH_001: Not authenticated' });
-  const isOwn = actor.user_id === id;
-  const isManager = ['OFFICE_MANAGER', 'OPS_ADMIN'].includes(actor.role);
+  const isOwn = req.actor?.user_id === req.params.id;
+  const isManager = ['OFFICE_MANAGER', 'OPS_ADMIN', 'SUPER_ADMIN'].includes(req.actor?.role);
   if (!isOwn && !isManager) {
-    return res.status(403).json({ success: false, message: 'AUTH_003: Cannot access another rider\'s data' });
+    return res.status(403).json({ success: false, message: 'AUTH_003: Access denied' });
   }
   next();
 }
