@@ -166,7 +166,7 @@ router.post('/assign-rider',
       const occurred_at = body.occurred_at || new Date().toISOString();
       const event = {
         parcel_id:     parcel.parcel_id,
-        event_type:    'RIDER_ASSIGNED',
+        event_type:    'PARCEL_RIDER_ASSIGNED',
         event_version: 1,
         actor_type:    req.actor.role,
         actor_id:      req.actor.user_id,

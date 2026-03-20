@@ -66,6 +66,10 @@ export const FLOW_STATE_MACHINE: Record<string, NextEventRule> = {
     events: ['PARCEL_AGENT_DROPOFF'],
     actors: [UserRole.AGENT, UserRole.OFFICE_WORKER, UserRole.OFFICE_MANAGER],
   },
+  'OFFICER_ASSIGNED': {
+    events: ['PARCEL_RIDER_ASSIGNED'],
+    actors: ['SYSTEM', 'OPS_ADMIN', 'SUPER_ADMIN', 'OFFICE_MANAGER'],
+  },
   'PARCEL_RIDER_ASSIGNED': {
     events: ['PARCEL_RIDER_DISPATCHED'],
     actors: ['SYSTEM'],
