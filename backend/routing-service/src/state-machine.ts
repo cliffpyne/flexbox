@@ -156,7 +156,7 @@ export const FLOW_STATE_MACHINE: Record<string, NextEventRule> = {
   },
   'PARCEL_LAST_MILE_ARRIVED_AT_RECEIVER': {
     events: ['PARCEL_DELIVERY_CONFIRMED', 'PARCEL_DELIVERY_ATTEMPTED'],
-    actors: [UserRole.RIDER],
+    actors: [UserRole.RIDER, UserRole.OPS_ADMIN, UserRole.SUPER_ADMIN, 'SYSTEM'],
   },
   'PARCEL_DELIVERY_ATTEMPTED': {
     events: ['PARCEL_LAST_MILE_RIDER_DISPATCHED', 'PARCEL_DELIVERY_FAILED'],
